@@ -11,8 +11,8 @@ export default function Converter({ snapshots, selectedDays = 30 }) {
   const groups = groupSnapshots(safeSnapshots);
 
   return (
-    <main>
-      <div>
+    <main className="min-w-0">
+      <div className="min-w-0">
         {Object.entries(groups).map(([code, pairs]) => (
           <CurrencySection
             key={code}

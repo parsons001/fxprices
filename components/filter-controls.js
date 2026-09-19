@@ -5,9 +5,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SelectField } from "./ui/select-field";
 import { SelectItem } from "./ui/select";
 import { useView } from "./view-tabs";
+import { RANGE_OPTIONS, rangeLabel } from "../lib/chart-history";
 import { money } from "../lib/format";
 
-const RANGE_OPTIONS = [30, 60, 90, 180];
+
 
 function getDefaultCurrency(currencies) {
   return currencies.includes("EUR") ? "EUR" : currencies[0];
@@ -108,7 +109,7 @@ export default function FilterControls({ amounts, currencies, quoteDates = [] })
         >
           {RANGE_OPTIONS.map((value) => (
             <SelectItem key={value} value={String(value)}>
-              Last {value} days
+              {rangeLabel(value)}
             </SelectItem>
           ))}
         </SelectField>

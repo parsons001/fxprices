@@ -41,3 +41,9 @@ Trigger an update manually with the secret set in your shell environment:
 ```sh
 curl --header "Authorization: Bearer $CRON_SECRET" https://your-app.example/api/cron/update-quotes
 ```
+
+Chart ranges include Last 24 hours and Last 7 days with UTC hourly points (multiple quotes within an hour are averaged per provider). The 30/60/90/180-day ranges show daily arithmetic mean markup per provider. Missing intervals remain gaps; table quotes remain individual snapshots.
+
+## Navigation
+
+The site navigation links to `/convert` (existing saved conversion charts and tables) and `/send` (placeholder for transfer comparisons). `/` redirects to `/convert`, preserving filter query parameters.

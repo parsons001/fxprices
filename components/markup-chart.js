@@ -1,5 +1,6 @@
 "use client";
 
+import { aggregateHistory, rangeLabel } from "../lib/chart-history";
 import { formatPct } from "../lib/format";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
@@ -29,40 +30,14 @@ export default function MarkupChart({ points, currency, loading, days = 30 }) {
       </Card>
     );
 
-  const series = Object.entries(
-    valid.reduce((groups, point) => {
-      const key = point.label;
-      groups[key] ??= [];
-      groups[key].push({
-        ...point,
-        date: new Date(point.fetchedAt),
-        dateKey: new Date(point.fetchedAt).toISOString().slice(0, 10),
-      });
-      return groups;
-    }, {}),
-  ).map(([label, values], index) => ({
-    key: `provider${index}`,
-    label,
-    color: COLORS[index % COLORS.length],
-    values: values.sort((a, b) => a.date - b.date),
-  }));
-  const dates = Array.from(
-    new Set(
-      valid.map((point) =>
-        new Date(point.fetchedAt).toISOString().slice(0, 10),
-      ),
-    ),
-  ).sort();
-  const chartData = dates.map((dateKey) =>
-    Object.fromEntries([
-      ["dateKey", dateKey],
-      ...series.map((entry) => [
-        entry.key,
-        entry.values.find((point) => point.dateKey === dateKey)?.markup ?? null,
-      ]),
-    ]),
-  );
-  const markupValues = valid.map((point) => point.markup);
+  const { hourly, series: providerSeries, chartData } = aggregateHistory(valid, days);
+  const series = providerSeries.map((entry, index) => ({ ...entry, color: COLORS[index % COLORS.length] }));
+  const markupValues = chartData.flatMap((row) => series.map((entry) => row[entry.key])).filter(Number.isFinite);
+  const dateLabel = (value, tooltip = false) => new Date(value).toLocaleString("en-GB", {
+    timeZone: "UTC", month: "short", day: "numeric",
+    ...(hourly ? { hour: "2-digit", minute: "2-digit", hour12: false } : {}),
+    ...(tooltip ? { year: "numeric" } : {}),
+  });
   const min = Math.min(0, ...markupValues);
   const max = Math.max(0, ...markupValues);
   const padding = Math.max((max - min) * 0.15, 1);
@@ -81,18 +56,18 @@ export default function MarkupChart({ points, currency, loading, days = 30 }) {
   );
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-4 min-w-0 overflow-hidden">
       <CardHeader>
         <h3 className="font-semibold">Historic markup trend</h3>
         <p className="text-sm leading-6 text-muted-foreground">
-          Markup vs Wise mid-market over the last {days} days for the selected
-          amount and currency. 0% matches mid-market.
+          Markup vs Wise mid-market: {rangeLabel(days).toLowerCase()} for the selected
+          amount and currency. {hourly ? "Hourly points (averaged when multiple quotes fall in the same hour)." : "Daily average markup."} Times are UTC. 0% matches mid-market.
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-w-0 overflow-hidden">
         <ChartContainer
           config={chartConfig}
-          className="h-[290px] w-full min-w-[880px]"
+          className="aspect-auto h-[220px] w-full min-w-0 sm:h-[290px]"
         >
           <LineChart
             accessibilityLayer
@@ -106,12 +81,7 @@ export default function MarkupChart({ points, currency, loading, days = 30 }) {
               axisLine={false}
               tickMargin={8}
               minTickGap={28}
-              tickFormatter={(value) =>
-                new Date(`${value}T00:00:00`).toLocaleDateString("en-GB", {
-                  month: "short",
-                  day: "numeric",
-                })
-              }
+              tickFormatter={(value) => dateLabel(value)}
             />
             <YAxis
               domain={[low, high]}
@@ -126,13 +96,7 @@ export default function MarkupChart({ points, currency, loading, days = 30 }) {
               cursor={{ stroke: "hsl(var(--border))", strokeDasharray: "3 3" }}
               content={
                 <ChartTooltipContent
-                  labelFormatter={(value) =>
-                    new Date(`${value}T00:00:00`).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })
-                  }
+                  labelFormatter={(value) => `${dateLabel(value, true)} UTC`}
                   formatter={(value) => formatPct(Number(value))}
                 />
               }
@@ -151,7 +115,7 @@ export default function MarkupChart({ points, currency, loading, days = 30 }) {
                   strokeWidth: 1,
                 }}
                 activeDot={{ r: 5, fill: entry.color, stroke: entry.color }}
-                connectNulls
+                connectNulls={false}
               />
             ))}
           </LineChart>

@@ -26,5 +26,5 @@ export default function ViewTabs({ children }) {
 export function ViewPanel({ view, children }) {
   const activeView = useContext(ViewContext);
   if (activeView !== view) return null;
-  return <div>{children}</div>;
+  return <div className="min-w-0">{children}</div>;
 }
