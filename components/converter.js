@@ -1,7 +1,6 @@
 import QuoteNotes from "./quote-notes";
 import MarkupChart from "./markup-chart";
 import QuoteTable from "./quote-table";
-import { TableDateProvider, TableDateSelect } from "./table-date";
 import { ViewPanel } from "./view-tabs";
 import { CURRENCIES } from "../lib/currencies";
 import { quoteLabel, markupFor } from "../lib/format";
@@ -10,31 +9,23 @@ import { normalizeSnapshots } from "../lib/snapshot";
 export default function Converter({ snapshots, selectedDays = 30 }) {
   const safeSnapshots = normalizeSnapshots(snapshots);
   const groups = groupSnapshots(safeSnapshots);
-  const tableDates = [
-    ...new Set(
-      safeSnapshots.map((pair) => new Date(pair.fetchedAt).toISOString().slice(0, 10)),
-    ),
-  ].sort();
 
   return (
-    <TableDateProvider dates={tableDates}>
-      <TableDateSelect />
-      <main>
-        <div>
-          {Object.entries(groups).map(([code, pairs]) => (
-            <CurrencySection
-              key={code}
-              currency={code}
-              pairs={pairs}
-              days={selectedDays}
-            />
-          ))}
-        </div>
-        <footer className="mt-10 border-t pt-6">
-          <QuoteNotes />
-        </footer>
-      </main>
-    </TableDateProvider>
+    <main>
+      <div>
+        {Object.entries(groups).map(([code, pairs]) => (
+          <CurrencySection
+            key={code}
+            currency={code}
+            pairs={pairs}
+            days={selectedDays}
+          />
+        ))}
+      </div>
+      <footer className="mt-10 border-t pt-6">
+        <QuoteNotes />
+      </footer>
+    </main>
   );
 }
 

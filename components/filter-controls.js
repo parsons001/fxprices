@@ -22,7 +22,7 @@ function initialValue(searchParams, name, fallback, options) {
   return value && options.includes(value) ? value : fallback;
 }
 
-export default function FilterControls({ amounts, currencies }) {
+export default function FilterControls({ amounts, currencies, quoteDates = [] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -48,9 +48,12 @@ export default function FilterControls({ amounts, currencies }) {
     );
   }, [amounts, currencies, searchParams]);
 
-  function updateFilter(name, value, setValue) {
+  const quoteDate = initialValue(searchParams, "quoteDate", quoteDates[0] ?? "", quoteDates);
+
+  function updateFilter(name, value, setValue = () => {}) {
     setValue(value);
     const next = new URLSearchParams(searchParams.toString());
+    if (name !== "quoteDate") next.delete("quoteDate");
     if (value === "__all__") next.delete(name);
     else next.set(name, value);
     startTransition(() =>
@@ -70,7 +73,6 @@ export default function FilterControls({ amounts, currencies }) {
         value={amount}
         onValueChange={(value) => updateFilter("gbpAmount", value, setAmount)}
       >
-        <SelectItem value="__all__">All amounts</SelectItem>
         {amounts.map((value) => (
           <SelectItem key={value} value={String(value)}>
             {money(value, "GBP")}
@@ -83,13 +85,20 @@ export default function FilterControls({ amounts, currencies }) {
         value={currency}
         onValueChange={(value) => updateFilter("currency", value, setCurrency)}
       >
-        <SelectItem value="__all__">All currencies</SelectItem>
         {currencies.map((value) => (
           <SelectItem key={value} value={value}>
             {value}
           </SelectItem>
         ))}
       </SelectField>
+      {view === "table" && (quoteDates.length ? (
+        <SelectField label="Quote date" name="quoteDate" value={quoteDate}
+          onValueChange={(value) => updateFilter("quoteDate", value)}>
+          {quoteDates.map((date) => <SelectItem key={date} value={date}>
+            {new Date(date).toLocaleString("en-GB", { timeZone: "UTC", dateStyle: "medium", timeStyle: "medium" })} UTC
+          </SelectItem>)}
+        </SelectField>
+      ) : <p className="text-sm text-muted-foreground">No saved quote dates available.</p>)}
       {view === "graph" && (
         <SelectField
           label="History"
@@ -104,7 +113,6 @@ export default function FilterControls({ amounts, currencies }) {
           ))}
         </SelectField>
       )}
-      {view === "table" && <div id="table-date-slot" />}
     </div>
   );
 }

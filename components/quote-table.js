@@ -1,9 +1,10 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+
 import { formatPct, formatRate, money } from "../lib/format";
 import { Card, CardContent } from "./ui/card";
 import { Table } from "./ui/table";
-import { useTableDate } from "./table-date";
 
 const TABLE_HEADERS = [
   "From amount (GBP)",
@@ -16,10 +17,13 @@ const TABLE_HEADERS = [
 ];
 
 export default function QuoteTable({ heading, currency, pairs }) {
-  const { selectedDate } = useTableDate();
-  const visiblePairs = pairs.filter(({ pair }) => getDateKey(pair.fetchedAt) === selectedDate);
+  const selectedDate = useSearchParams().get("quoteDate");
+  const dates = [...new Set(pairs.map(({ pair }) => pair.fetchedAt))].sort().reverse();
+  const quoteDate = dates.includes(selectedDate) ? selectedDate : dates[0];
+  const selectedPairs = pairs.filter(({ pair }) => pair.fetchedAt === quoteDate);
 
-  return <Card className="overflow-hidden">
+  return <>
+    <Card className="overflow-hidden">
     <CardContent className="p-0"><Table>
         <thead aria-labelledby={heading}>
           <tr className="bg-muted/50">
@@ -27,10 +31,10 @@ export default function QuoteTable({ heading, currency, pairs }) {
           </tr>
         </thead>
         <tbody>
-          {visiblePairs.map(({ pair, rows }) => <PairRows key={`${pair.amount}-${pair.fetchedAt}`} rows={rows} pair={pair} currency={currency} />)}
+          {selectedPairs.map(({ pair, rows }) => <PairRows key={`${pair.amount}-${pair.fetchedAt}`} rows={rows} pair={pair} currency={currency} />)}
         </tbody>
       </Table></CardContent>
-  </Card>;
+  </Card></>;
 }
 
 function PairRows({ rows, pair, currency }) {
@@ -50,10 +54,6 @@ function PairRows({ rows, pair, currency }) {
       <td colSpan={6}>{error.provider ? `${error.provider}: ` : ""}{error.message}</td>
     </tr>)}
   </>;
-}
-
-function getDateKey(value) {
-  return new Date(value).toISOString().slice(0, 10);
 }
 
 function getMarkupClass(markup) {

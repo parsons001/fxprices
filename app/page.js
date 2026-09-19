@@ -1,3 +1,4 @@
+import FilterControls from "../components/filter-controls";
 import Converter from "../components/converter";
 import { CURRENCIES, AMOUNTS_GBP } from "../lib/currencies";
 import { conversionStore } from "../lib/conversion-store";
@@ -42,5 +43,9 @@ export default async function Page({ searchParams = {} }) {
     snapshots = [];
   }
 
-  return <Converter snapshots={snapshots} selectedDays={selectedDays} />;
+  const quoteDates = [...new Set(snapshots.map((snapshot) => new Date(snapshot.fetchedAt).toISOString()))].sort().reverse();
+  return <>
+    <FilterControls amounts={AMOUNTS_GBP} currencies={CURRENCIES} quoteDates={quoteDates} />
+    <Converter snapshots={snapshots} selectedDays={selectedDays} />
+  </>;
 }

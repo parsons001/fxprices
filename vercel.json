@@ -1,8 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/update-quotes",
-      "schedule": "0 12 * * *"
-    }
-  ]
-}
+{}

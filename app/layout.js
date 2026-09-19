@@ -1,8 +1,5 @@
 import "./globals.css";
-import { Suspense } from "react";
-import FilterControls from "../components/filter-controls";
 import ViewTabs from "../components/view-tabs";
-import { AMOUNTS_GBP, CURRENCIES } from "../lib/currencies";
 
 export const metadata = {
   title: "FX Convert",
@@ -23,11 +20,6 @@ export default function Layout({ children }) {
             </h1>
           </header>
           <ViewTabs>
-            <Suspense
-              fallback={<div className="h-[74px] rounded-xl border bg-card" />}
-            >
-              <FilterControls amounts={AMOUNTS_GBP} currencies={CURRENCIES} />
-            </Suspense>
             {children}
           </ViewTabs>
         </div>

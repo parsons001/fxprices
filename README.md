@@ -23,15 +23,21 @@ Currency sections include provider tables and markup charts. Revolut fees are de
 
 - `GET /api/convert`: latest saved snapshots; optional `currency` and `gbpAmount` filters. Read-only.
 - `GET /api/convert/meta`: supported currencies and amounts.
-- `GET /api/cron/update-quotes`: protected Vercel Cron endpoint that refreshes every supported currency and GBP amount daily at 12:00 UTC. Vercel sends the `CRON_SECRET` as a bearer token.
+- `GET /api/cron/update-quotes`: manually triggered endpoint that refreshes every supported currency and GBP amount. Requires `Authorization: Bearer <CRON_SECRET>`; missing or incorrect tokens return HTTP 401.
 - `app/page.js`: loads saved results on the server.
 - `components/`: converter filters, tables, notes and charts.
 - `lib/conversion-store.js`: MongoDB snapshot reads and writes.
-- `lib/fetch-conversion.js`: offline ingestion helper retained for explicit maintenance; not exposed through any public route or UI.
+- `lib/fetch-conversion.js`: ingestion helper used by the protected update endpoint.
 - `revolut-plans.js`: existing conversion and plan calculations.
 
 `npm test` checks calculations, ingestion and the read-only public endpoint.
 
 ## Vercel deployment
 
-Set `MONGODB_URI`, `MONGODB_DB` and `CRON_SECRET` in the Vercel project environment variables. `vercel.json` schedules the quote refresh for 12:00 UTC every day. The schedule is UTC, so change the cron expression if midday should mean another timezone.
+Set `MONGODB_URI`, `MONGODB_DB` and `CRON_SECRET` in the deployment environment (or `.env.local` for local development). `CRON_SECRET` is the bearer password; the existing name is retained for compatibility. No Vercel cron schedule is configured. Deploy this change to remove the existing Vercel schedule.
+
+Trigger an update manually with the secret set in your shell environment:
+
+```sh
+curl --header "Authorization: Bearer $CRON_SECRET" https://your-app.example/api/cron/update-quotes
+```
