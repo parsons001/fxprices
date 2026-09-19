@@ -46,4 +46,14 @@ Chart ranges include Last 24 hours and Last 7 days with UTC hourly points (multi
 
 ## Navigation
 
-The site navigation links to `/convert` (existing saved conversion charts and tables) and `/send` (placeholder for transfer comparisons). `/` redirects to `/convert`, preserving filter query parameters.
+The site navigation links to `/convert` (existing saved conversion charts and tables) and `/send` (saved bank-transfer comparisons). `/` redirects to `/convert`, preserving filter query parameters.
+
+## Send comparisons
+
+`/send` reuses the Convert filters, Graph/Table views, quote-date selection and hourly/daily chart aggregation. It reads only `send_snapshots` in MongoDB. `/api/send` and `/api/send/meta` provide read-only saved results and metadata. No live provider requests are made when either page loads.
+
+The bearer-protected `/api/cron/update-quotes` now updates both Convert and Send, with a `mode` on each result and explicit provider errors. There is no automatic Vercel schedule.
+
+Send uses Wise `gateway/v1/price` with `BALANCE` funding and `BANK_TRANSFER` payout. Revolut uses `api/remittance/routes`, selecting `BANK` and the API's plan fees. Source amounts are major GBP units for Wise and minor GBP units for Revolut. Revolut received amounts deduct the API total fee from the GBP budget before applying the quoted rate. No conversion-plan fee estimates are reused for transfers.
+
+Recipient countries are explicit in `lib/send-countries.js`: EUR→ES, AED→AE, AUD→AU, CAD→CA, USD→US, PLN→PL, RON→RO, CHF→CH, ZAR→ZA, INR→IN, PHP→PH, BDT→BD, PKR→PK, JPY→JP. The country is shown on Send. Unsupported currency/country mappings return an error instead of using an unrelated route. Intermediary-bank fees are not included in the comparison.

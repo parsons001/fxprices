@@ -1,3 +1,5 @@
+import SendNotes from "./send-notes";
+import { SEND_COUNTRIES } from "../lib/send-countries";
 import QuoteNotes from "./quote-notes";
 import MarkupChart from "./markup-chart";
 import QuoteTable from "./quote-table";
@@ -6,12 +8,13 @@ import { CURRENCIES } from "../lib/currencies";
 import { quoteLabel, markupFor } from "../lib/format";
 import { normalizeSnapshots } from "../lib/snapshot";
 
-export default function Converter({ snapshots, selectedDays = 30 }) {
+export default function Converter({ snapshots, selectedDays = 30, mode = "convert" }) {
   const safeSnapshots = normalizeSnapshots(snapshots);
   const groups = groupSnapshots(safeSnapshots);
 
   return (
     <main className="min-w-0">
+      {!safeSnapshots.length && <p role="status" className="my-6 text-muted-foreground">No saved quotes available for this selection.</p>}
       <div className="min-w-0">
         {Object.entries(groups).map(([code, pairs]) => (
           <CurrencySection
@@ -19,17 +22,18 @@ export default function Converter({ snapshots, selectedDays = 30 }) {
             currency={code}
             pairs={pairs}
             days={selectedDays}
+            mode={mode}
           />
         ))}
       </div>
       <footer className="mt-10 border-t pt-6">
-        <QuoteNotes />
+        {mode === "send" ? <SendNotes /> : <QuoteNotes />}
       </footer>
     </main>
   );
 }
 
-function CurrencySection({ currency, pairs, days = 30 }) {
+function CurrencySection({ currency, pairs, days = 30, mode = "convert" }) {
   const preparedPairs = pairs.map(preparePair);
   const rows = preparedPairs.flatMap(({ rows: pairRows }) => pairRows);
   const lastFetched = preparedPairs
@@ -40,7 +44,7 @@ function CurrencySection({ currency, pairs, days = 30 }) {
   return (
     <section className="mt-8" aria-labelledby={heading}>
       <h2 id={heading} className="mb-3 text-xl font-semibold tracking-tight">
-        GBP → {currency}
+        GBP → {currency}{mode === "send" ? ` (${SEND_COUNTRIES[currency] ?? "Unsupported destination"})` : ""}
       </h2>
       <p className="mb-4 text-sm leading-6 text-muted-foreground">
         Last fetched: {formatFetchedAt(lastFetched)}
@@ -54,7 +58,7 @@ function CurrencySection({ currency, pairs, days = 30 }) {
         />
       </ViewPanel>
       <ViewPanel view="table">
-        <QuoteTable heading={heading} currency={currency} pairs={preparedPairs} />
+        <QuoteTable heading={heading} currency={currency} pairs={preparedPairs} mode={mode} />
       </ViewPanel>
     </section>
   );

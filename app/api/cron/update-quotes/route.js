@@ -1,3 +1,4 @@
+import { fetchAndStoreSend } from "../../../../lib/fetch-send.js";
 import { fetchAndStoreConversion } from "../../../../lib/fetch-conversion.js";
 import { CURRENCIES, AMOUNTS_GBP } from "../../../../lib/currencies.js";
 
@@ -16,22 +17,24 @@ export async function GET(request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const jobs = CURRENCIES.flatMap((currency) =>
+  const jobs = [["convert", fetchAndStoreConversion], ["send", fetchAndStoreSend]].flatMap(([mode, update]) => CURRENCIES.flatMap((currency) =>
     AMOUNTS_GBP.map(async (amount) => {
-      const response = await fetchAndStoreConversion(
+      const response = await update(
         new Request(
           `https://internal/api/convert?currency=${currency}&gbpAmount=${amount}`,
         ),
       );
       const result = await response.json();
       return {
+        mode,
         currency,
         amount,
         saved: result.storage?.saved === true,
+        providerErrors: result.errors ?? [],
         error: result.storage?.error ?? result.error ?? null,
       };
     }),
-  );
+  ));
   const results = await Promise.allSettled(jobs);
   const completed = results.filter((result) => result.status === "fulfilled").map((result) => result.value);
   const failed = results.filter((result) => result.status === "rejected").map((result) => ({ error: result.reason?.message ?? "Update failed" }));
