@@ -1,6 +1,7 @@
 "use client";
 
 import { aggregateHistory, rangeLabel } from "../lib/chart-history";
+import { chartCsv } from "../lib/chart-csv";
 import { formatPct } from "../lib/format";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
@@ -15,7 +16,7 @@ const COLORS = [
   "#0369a1",
 ];
 
-export default function MarkupChart({ points, currency, loading, days = 30 }) {
+export default function MarkupChart({ points, currency, loading, days = 30, mode = "convert" }) {
   const valid = points.filter((point) => Number.isFinite(point.markup));
   if (!valid.length)
     return (
@@ -55,10 +56,26 @@ export default function MarkupChart({ points, currency, loading, days = 30 }) {
     ]),
   );
 
+  function downloadCsv() {
+    const amount = valid[0]?.amount;
+    const csv = chartCsv({ chartData, series, currency, amount, mode, hourly });
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${mode}-GBP-${currency}-${amount}-${days}d.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   return (
     <Card className="mb-4 min-w-0 overflow-hidden">
       <CardHeader>
-        <h3 className="font-semibold">Historic markup trend</h3>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="font-semibold">Historic markup trend</h3>
+          <button type="button" onClick={downloadCsv} className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2">Download CSV</button>
+        </div>
         <p className="text-sm leading-6 text-muted-foreground">
           Markup vs Wise mid-market: {rangeLabel(days).toLowerCase()} for the selected
           amount and currency. {hourly ? "Hourly points (averaged when multiple quotes fall in the same hour)." : "Daily average markup."} Times are UTC. 0% matches mid-market.

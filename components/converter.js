@@ -55,6 +55,7 @@ function CurrencySection({ currency, pairs, days = 30, mode = "convert" }) {
           points={rows}
           loading={!preparedPairs.length}
           days={days}
+          mode={mode}
         />
       </ViewPanel>
       <ViewPanel view="table">
