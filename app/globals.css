@@ -17,7 +17,7 @@
 }
 
 :root {
-  --background: 210 40% 98%;
+  --background: 0 0% 98%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
@@ -39,6 +39,8 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
   }
 
   :is(a[href], button, select, summary, [role="button"], [role="link"], [role="combobox"], [role="option"], [role="tab"], [role="menuitem"], input[type="button"], input[type="submit"], input[type="reset"]):not(:disabled):not([aria-disabled="true"]):not([data-disabled]) {

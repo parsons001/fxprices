@@ -71,9 +71,9 @@ export default function MarkupChart({ points, currency, loading, days = 30, mode
 
   return (
     <Card className="mb-4 min-w-0 overflow-hidden">
-      <CardHeader>
+      <CardHeader className="border-b px-5 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="font-semibold">Historic markup trend</h3>
+          <h3 className="font-semibold">Markup history</h3>
           <button type="button" onClick={downloadCsv} className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2">Download CSV</button>
         </div>
         <p className="text-sm leading-6 text-muted-foreground">
@@ -81,7 +81,7 @@ export default function MarkupChart({ points, currency, loading, days = 30, mode
           amount and currency. {hourly ? "Hourly points (averaged when multiple quotes fall in the same hour)." : "Daily average markup."} Times are UTC. 0% matches mid-market.
         </p>
       </CardHeader>
-      <CardContent className="min-w-0 overflow-hidden">
+      <CardContent className="min-w-0 overflow-hidden px-3 pt-6 sm:px-6">
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[220px] w-full min-w-0 sm:h-[290px]"
@@ -138,7 +138,7 @@ export default function MarkupChart({ points, currency, loading, days = 30, mode
           </LineChart>
         </ChartContainer>
         <div
-          className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
+          className="mt-5 flex flex-wrap justify-center gap-x-6 gap-y-3 border-t pt-4 text-xs text-muted-foreground"
           aria-label="Providers"
         >
           {series.map((entry) => (

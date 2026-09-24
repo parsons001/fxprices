@@ -7,18 +7,18 @@ import { Card, CardContent } from "./ui/card";
 import { Table } from "./ui/table";
 
 const TABLE_HEADERS = [
-  "From amount (GBP)",
+  "Budget (GBP)",
   "Provider",
-  "To amount",
+  "Received",
   "Exchange rate",
-  "Mid-market rate (Wise)",
+  "Wise mid-market",
   "Fees (GBP)",
-  "To amount markup vs mid-market (%)",
+  "Markup (%)",
 ];
 
 export default function QuoteTable({ heading, currency, pairs, mode = "convert", sourceCurrency = "GBP" }) {
   const isSend = mode === "send";
-  const headers = isSend ? [...TABLE_HEADERS.slice(0, 6), "Additional fee vs Convert (GBP)", ...TABLE_HEADERS.slice(6)] : TABLE_HEADERS;
+  const headers = isSend ? [...TABLE_HEADERS.slice(0, 6), "International payment fee", ...TABLE_HEADERS.slice(6)] : TABLE_HEADERS;
   const displayHeaders = headers.map((label) => label.replaceAll("GBP", sourceCurrency));
   const selectedDate = useSearchParams().get("quoteDate");
   const dates = [...new Set(pairs.map(({ pair }) => pair.fetchedAt))].sort().reverse();
@@ -26,18 +26,19 @@ export default function QuoteTable({ heading, currency, pairs, mode = "convert",
   const selectedPairs = pairs.filter(({ pair }) => pair.fetchedAt === quoteDate);
 
   return <>
-    {isSend && <p className="mb-3 text-sm text-muted-foreground">Additional fee compares this Send quote with the latest saved Convert fee for the same amount and plan. Negative values mean lower Send fees; — means unavailable.</p>}
     <Card className="overflow-hidden">
+    <div className="border-b px-5 py-4 sm:px-6"><h3 className="text-sm font-semibold">Provider quotes</h3><p className="mt-1 text-xs text-muted-foreground">{quoteDate ? new Date(quoteDate).toLocaleString("en-GB", { timeZone: "UTC" }) + " UTC" : "No quote selected"} · Fees included in the budget</p></div>
     <CardContent className="p-0"><Table>
         <thead aria-labelledby={heading}>
           <tr className="bg-muted/50">
-            {headers.map((label) => <th scope="col" key={label}>{label}</th>)}
+            {displayHeaders.map((label) => <th scope="col" key={label}>{label}</th>)}
           </tr>
         </thead>
         <tbody>
           {selectedPairs.map(({ pair, rows }) => <PairRows key={`${pair.amount}-${pair.fetchedAt}`} rows={rows} pair={pair} currency={currency} isSend={isSend} sourceCurrency={sourceCurrency} />)}
         </tbody>
       </Table></CardContent>
+    {isSend && <p className="border-t bg-muted/20 px-5 py-4 text-xs leading-5 text-muted-foreground">International payment fee = Send fee − latest matching Convert fee. Values are in {sourceCurrency}. Negative values mean lower Send fees; — means no matching fee is available.</p>}
   </Card></>;
 }
 

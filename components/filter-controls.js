@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SelectField } from "./ui/select-field";
 import { SelectItem } from "./ui/select";
-import { useView } from "./view-tabs";
+import { useView, ViewSwitcher } from "./view-tabs";
 import { RANGE_OPTIONS, rangeLabel } from "../lib/chart-history";
 import { SENDER_COUNTRIES } from "../lib/sender-countries";
 import { money } from "../lib/format";
@@ -29,7 +29,7 @@ export default function FilterControls({ amounts, currencies, quoteDates = [], s
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const view = useView();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [amount, setAmount] = useState(() =>
     initialValue(searchParams, "gbpAmount", getDefaultAmount(amounts), amounts.map(String)),
   );
@@ -67,10 +67,13 @@ export default function FilterControls({ amounts, currencies, quoteDates = [], s
   }
 
   return (
-    <div
-      className="grid grid-cols-4 items-end gap-4 rounded-xl border bg-card p-5 max-[600px]:grid-cols-1"
-    >
-      <SelectField label="Sending country" name="senderCountry" value={senderCountry}
+    <section aria-labelledby="filter-heading" aria-busy={isPending} className="rounded-xl border bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b px-5 py-4 sm:px-6">
+        <div><h2 id="filter-heading" className="text-sm font-semibold">Filters</h2><p className="mt-1 text-xs text-muted-foreground" role="status">{isPending ? "Loading saved data…" : "View saved quotes by market and amount."}</p></div>
+        <ViewSwitcher />
+      </div>
+      <div className="grid grid-cols-1 items-end gap-4 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-4">
+      <SelectField label="Profile country" name="senderCountry" value={senderCountry}
         onValueChange={(value) => updateFilter("senderCountry", value)}>
         {Object.entries(SENDER_COUNTRIES).map(([code, config]) => <SelectItem key={code} value={code}>{config.name}</SelectItem>)}
       </SelectField>
@@ -108,7 +111,7 @@ export default function FilterControls({ amounts, currencies, quoteDates = [], s
       ) : <p className="text-sm text-muted-foreground">No saved quote dates available.</p>)}
       {view === "graph" && (
         <SelectField
-          label="History"
+          label="Chart range"
           name="days"
           value={days}
           onValueChange={(value) => updateFilter("days", value, setDays)}
@@ -120,6 +123,7 @@ export default function FilterControls({ amounts, currencies, quoteDates = [], s
           ))}
         </SelectField>
       )}
-    </div>
+      </div>
+    </section>
   );
 }
