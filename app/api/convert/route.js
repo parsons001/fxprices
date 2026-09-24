@@ -1,3 +1,4 @@
+import { SENDER_COUNTRIES, targetCurrencies } from "../../../lib/sender-countries.js";
 import { conversionStore } from "../../../lib/conversion-store.js";
 import { CURRENCIES, AMOUNTS_GBP } from "../../../lib/currencies.js";
 export const dynamic = "force-dynamic";
@@ -5,10 +6,12 @@ export const runtime = "nodejs";
 
 export async function GET(request) {
   const query = new URL(request.url).searchParams;
+  const senderCountry = (query.get("senderCountry") ?? "GB").toUpperCase();
+  if (!Object.hasOwn(SENDER_COUNTRIES, senderCountry)) return Response.json({ error: "Unsupported sending country" }, { status: 400 });
   const currency = query.get("currency")?.toUpperCase();
   const amount = query.has("gbpAmount") ? Number(query.get("gbpAmount")) : null;
   if (
-    (currency && !CURRENCIES.includes(currency)) ||
+    (currency && !targetCurrencies(CURRENCIES, senderCountry).includes(currency)) ||
     (amount !== null && !AMOUNTS_GBP.includes(amount))
   ) {
     return Response.json(
@@ -17,7 +20,7 @@ export async function GET(request) {
     );
   }
   try {
-    const snapshots = (await conversionStore.latest()).filter(
+    const snapshots = (await conversionStore.latest({ senderCountry })).filter(
       (row) =>
         (!currency || row.currency === currency) &&
         (amount === null || row.amount === amount),

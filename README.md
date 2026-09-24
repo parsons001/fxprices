@@ -57,3 +57,13 @@ The bearer-protected `/api/cron/update-quotes` now updates both Convert and Send
 Send uses Wise `gateway/v1/price` with `BALANCE` funding and `BANK_TRANSFER` payout. Revolut uses `api/remittance/routes`, selecting `BANK` and the API's plan fees. Source amounts are major GBP units for Wise and minor GBP units for Revolut. Revolut received amounts deduct the API total fee from the GBP budget before applying the quoted rate. No conversion-plan fee estimates are reused for transfers.
 
 Recipient countries are explicit in `lib/send-countries.js`: EUR→ES, AED→AE, AUD→AU, CAD→CA, USD→US, PLN→PL, RON→RO, CHF→CH, ZAR→ZA, INR→IN, PHP→PH, BDT→BD, PKR→PK, JPY→JP. The country is shown on Send. Unsupported currency/country mappings return an error instead of using an unrelated route. Intermediary-bank fees are not included in the comparison.
+
+## Sending country
+
+Both pages have a Sending country selector: United Kingdom (GBP), Ireland (EUR), and Spain (EUR). The same configured numeric amount ladder applies in the selected source currency. EUR markets replace EUR with GBP in the destination list. Navigation preserves the selected country; filters, fee comparisons and CSV files use that country's source currency.
+
+Requests and snapshots carry `senderCountry` and `sourceCurrency`. Wise receives `profileCountry`; Revolut receives `country` for conversion and `senderCountry` for remittance. History and latest queries filter by country. Existing snapshots without a country remain UK-only. Ireland and Spain conversion quotes fill missing paid plans using EUR allowances: Plus 0.5% above €3,000 plus 0.5% of the full budget for weekend exchanges; Premium, Metal and Ultra have no extra conversion fees. Full unused allowance is assumed and subscriptions are excluded. API-returned plans take precedence. Send continues using remittance API fees.
+
+The protected update endpoint refreshes all three countries by default. Add `?senderCountry=IE` (or `ES`/`GB`) to update one country. Read-only endpoints accept the same country parameter. No live quote fetching occurs when viewing the pages.
+
+For backward compatibility, stored quote properties named `feeGbp`, `costGbp` and related fee fields contain values in the snapshot's `sourceCurrency`; always use that field to interpret amounts. Existing `gbpAmount` query parameters remain supported; ingestion also accepts `amount`.

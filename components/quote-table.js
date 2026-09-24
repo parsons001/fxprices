@@ -16,9 +16,10 @@ const TABLE_HEADERS = [
   "To amount markup vs mid-market (%)",
 ];
 
-export default function QuoteTable({ heading, currency, pairs, mode = "convert" }) {
+export default function QuoteTable({ heading, currency, pairs, mode = "convert", sourceCurrency = "GBP" }) {
   const isSend = mode === "send";
   const headers = isSend ? [...TABLE_HEADERS.slice(0, 6), "Additional fee vs Convert (GBP)", ...TABLE_HEADERS.slice(6)] : TABLE_HEADERS;
+  const displayHeaders = headers.map((label) => label.replaceAll("GBP", sourceCurrency));
   const selectedDate = useSearchParams().get("quoteDate");
   const dates = [...new Set(pairs.map(({ pair }) => pair.fetchedAt))].sort().reverse();
   const quoteDate = dates.includes(selectedDate) ? selectedDate : dates[0];
@@ -34,29 +35,29 @@ export default function QuoteTable({ heading, currency, pairs, mode = "convert" 
           </tr>
         </thead>
         <tbody>
-          {selectedPairs.map(({ pair, rows }) => <PairRows key={`${pair.amount}-${pair.fetchedAt}`} rows={rows} pair={pair} currency={currency} isSend={isSend} />)}
+          {selectedPairs.map(({ pair, rows }) => <PairRows key={`${pair.amount}-${pair.fetchedAt}`} rows={rows} pair={pair} currency={currency} isSend={isSend} sourceCurrency={sourceCurrency} />)}
         </tbody>
       </Table></CardContent>
   </Card></>;
 }
 
-function PairRows({ rows, pair, currency, isSend }) {
+function PairRows({ rows, pair, currency, isSend, sourceCurrency }) {
   return <>
-    {pair.storage?.saved === false && <tr><td>{money(pair.amount, "GBP")}</td><td colSpan={isSend ? 7 : 6} role="alert">{pair.storage.error}</td></tr>}
+    {pair.storage?.saved === false && <tr><td>{money(pair.amount, sourceCurrency)}</td><td colSpan={isSend ? 7 : 6} role="alert">{pair.storage.error}</td></tr>}
     {rows.map((row, index) => <tr key={index}>
-      <td>{money(row.costGbp, "GBP")}</td>
+      <td>{money(row.costGbp, sourceCurrency)}</td>
       <td>{row.label}</td>
       <td>{money(row.receivedAmount, currency)}</td>
       <td>{formatRate(row.rate)}</td>
       <td>{formatRate(row.midMarketRate)}</td>
-      <td>{money(row.feeGbp, "GBP")}</td>
+      <td>{money(row.feeGbp, sourceCurrency)}</td>
       {isSend && <td title={row.convertFeeDate ? `Send fee minus latest saved Convert fee (${row.convertFeeDate})${row.convertFeeEstimated ? "; estimated Convert fee" : ""}` : "Matching Convert fee unavailable"}>
-        {row.additionalFeeGbp > 0 ? "+" : ""}{money(row.additionalFeeGbp, "GBP")}
+        {row.additionalFeeGbp > 0 ? "+" : ""}{money(row.additionalFeeGbp, sourceCurrency)}
       </td>}
       <td className={getMarkupClass(row.markup)}>{formatPct(row.markup)}</td>
     </tr>)}
     {pair.errors.map((error, index) => <tr key={`error-${index}`}>
-      <td>{money(pair.amount, "GBP")}</td>
+      <td>{money(pair.amount, sourceCurrency)}</td>
       <td colSpan={isSend ? 7 : 6}>{error.provider ? `${error.provider}: ` : ""}{error.message}</td>
     </tr>)}
   </>;

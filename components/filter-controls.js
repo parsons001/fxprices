@@ -6,12 +6,13 @@ import { SelectField } from "./ui/select-field";
 import { SelectItem } from "./ui/select";
 import { useView } from "./view-tabs";
 import { RANGE_OPTIONS, rangeLabel } from "../lib/chart-history";
+import { SENDER_COUNTRIES } from "../lib/sender-countries";
 import { money } from "../lib/format";
 
 
 
 function getDefaultCurrency(currencies) {
-  return currencies.includes("EUR") ? "EUR" : currencies[0];
+  return currencies.includes("EUR") ? "EUR" : currencies.includes("GBP") ? "GBP" : currencies[0];
 }
 
 function getDefaultAmount(amounts) {
@@ -23,7 +24,7 @@ function initialValue(searchParams, name, fallback, options) {
   return value && options.includes(value) ? value : fallback;
 }
 
-export default function FilterControls({ amounts, currencies, quoteDates = [] }) {
+export default function FilterControls({ amounts, currencies, quoteDates = [], senderCountry = "GB", sourceCurrency = "GBP" }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -54,6 +55,7 @@ export default function FilterControls({ amounts, currencies, quoteDates = [] })
   function updateFilter(name, value, setValue = () => {}) {
     setValue(value);
     const next = new URLSearchParams(searchParams.toString());
+    if (name === "senderCountry") next.delete("currency");
     if (name !== "quoteDate") next.delete("quoteDate");
     if (value === "__all__") next.delete(name);
     else next.set(name, value);
@@ -66,17 +68,21 @@ export default function FilterControls({ amounts, currencies, quoteDates = [] })
 
   return (
     <div
-      className="grid grid-cols-3 items-end gap-4 rounded-xl border bg-card p-5 max-[600px]:grid-cols-1"
+      className="grid grid-cols-4 items-end gap-4 rounded-xl border bg-card p-5 max-[600px]:grid-cols-1"
     >
+      <SelectField label="Sending country" name="senderCountry" value={senderCountry}
+        onValueChange={(value) => updateFilter("senderCountry", value)}>
+        {Object.entries(SENDER_COUNTRIES).map(([code, config]) => <SelectItem key={code} value={code}>{config.name}</SelectItem>)}
+      </SelectField>
       <SelectField
-        label="GBP amount"
+        label={`${sourceCurrency} amount`}
         name="gbpAmount"
         value={amount}
         onValueChange={(value) => updateFilter("gbpAmount", value, setAmount)}
       >
         {amounts.map((value) => (
           <SelectItem key={value} value={String(value)}>
-            {money(value, "GBP")}
+            {money(value, sourceCurrency)}
           </SelectItem>
         ))}
       </SelectField>

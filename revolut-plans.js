@@ -1,4 +1,7 @@
-// UK personal-plan rules, checked 2026-09-12:
+// GBP/EUR paid-plan estimates. EUR rules checked 2026-09-24:
+// https://help.revolut.com/en-ES/help/card-payments-withdrawals/getting-started-with-card-payments/can-i-pay-in-a-specific-currency/
+// https://help.revolut.com/en-IE/help/card-payments-withdrawals/getting-started-with-card-payments/can-i-pay-in-a-specific-currency/
+// Legacy *Gbp fields are amounts in sourceCurrency.
 // https://www.revolut.com/our-pricing-plans/
 // https://help.revolut.com/help/wealth/exchanging-money/how-much-does-it-cost-to-make-an-exchange/will-i-be-charged-for-exchanging-foreign-currencies/
 export function fixedBudgetQuote(amountGbp, feeGbp, rate, targetDecimals = 2) {
@@ -19,6 +22,7 @@ export function fixedBudgetQuote(amountGbp, feeGbp, rate, targetDecimals = 2) {
 }
 
 export function estimatePaidPlans({
+  sourceCurrency = "GBP",
   amountGbp,
   rate,
   weekend,
@@ -26,6 +30,7 @@ export function estimatePaidPlans({
   targetDecimals = 2,
 }) {
   if (
+    !["GBP", "EUR"].includes(sourceCurrency) ||
     ![amountGbp, rate, usedAllowanceGbp].every(Number.isFinite) ||
     amountGbp <= 0 ||
     rate <= 0 ||
@@ -49,6 +54,7 @@ export function estimatePaidPlans({
       planId: name.toUpperCase(),
       option: name,
       estimated: true,
+      sourceCurrency,
       rate,
       feeGbp,
       ...fixedBudgetQuote(amountGbp, feeGbp, rate, targetDecimals),
@@ -67,11 +73,12 @@ export function liveRevolutQuote(
   currency,
   amountGbp,
   targetDecimals = 2,
+  sourceCurrency = "GBP",
 ) {
   if (
     quote.recipient?.currency !== currency ||
-    plan.fees?.total?.currency !== "GBP" ||
-    plan.fees?.cost?.currency !== "GBP" ||
+    plan.fees?.total?.currency !== sourceCurrency ||
+    plan.fees?.cost?.currency !== sourceCurrency ||
     ![
       quote.recipient.amount,
       quote.rate?.rate,

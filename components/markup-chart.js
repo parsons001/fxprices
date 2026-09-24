@@ -16,7 +16,7 @@ const COLORS = [
   "#0369a1",
 ];
 
-export default function MarkupChart({ points, currency, loading, days = 30, mode = "convert" }) {
+export default function MarkupChart({ points, currency, loading, days = 30, mode = "convert", sourceCurrency = "GBP", senderCountry = "GB" }) {
   const valid = points.filter((point) => Number.isFinite(point.markup));
   if (!valid.length)
     return (
@@ -58,11 +58,11 @@ export default function MarkupChart({ points, currency, loading, days = 30, mode
 
   function downloadCsv() {
     const amount = valid[0]?.amount;
-    const csv = chartCsv({ chartData, series, currency, amount, mode, hourly });
+    const csv = chartCsv({ chartData, series, currency, amount, mode, hourly, sourceCurrency, senderCountry });
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${mode}-GBP-${currency}-${amount}-${days}d.csv`;
+    link.download = `${mode}-${senderCountry}-${sourceCurrency}-${currency}-${amount}-${days}d.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();

@@ -8,7 +8,7 @@ import { CURRENCIES } from "../lib/currencies";
 import { quoteLabel, markupFor } from "../lib/format";
 import { normalizeSnapshots } from "../lib/snapshot";
 
-export default function Converter({ snapshots, selectedDays = 30, mode = "convert" }) {
+export default function Converter({ snapshots, selectedDays = 30, mode = "convert", sourceCurrency = "GBP", senderCountry = "GB" }) {
   const safeSnapshots = normalizeSnapshots(snapshots);
   const groups = groupSnapshots(safeSnapshots);
 
@@ -23,17 +23,19 @@ export default function Converter({ snapshots, selectedDays = 30, mode = "conver
             pairs={pairs}
             days={selectedDays}
             mode={mode}
+            sourceCurrency={sourceCurrency}
+            senderCountry={senderCountry}
           />
         ))}
       </div>
       <footer className="mt-10 border-t pt-6">
-        {mode === "send" ? <SendNotes /> : <QuoteNotes />}
+        {senderCountry === "GB" ? (mode === "send" ? <SendNotes /> : <QuoteNotes />) : <p className="text-sm text-muted-foreground">Quotes for {senderCountry} accounts use EUR budgets including fees. Revolut received amounts deduct quoted fees before conversion. Convert fills missing paid plans with EUR estimates: Plus charges 0.5% above €3,000 and an additional 0.5% on the full budget when weekend fees apply; Premium, Metal and Ultra have no additional exchange fees. Estimates assume the full allowance is available. Send uses API-returned transfer-plan fees. Subscription and intermediary-bank fees are excluded.</p>}
       </footer>
     </main>
   );
 }
 
-function CurrencySection({ currency, pairs, days = 30, mode = "convert" }) {
+function CurrencySection({ currency, pairs, days = 30, mode = "convert", sourceCurrency = "GBP", senderCountry = "GB" }) {
   const preparedPairs = pairs.map(preparePair);
   const rows = preparedPairs.flatMap(({ rows: pairRows }) => pairRows);
   const lastFetched = preparedPairs
@@ -44,7 +46,7 @@ function CurrencySection({ currency, pairs, days = 30, mode = "convert" }) {
   return (
     <section className="mt-8" aria-labelledby={heading}>
       <h2 id={heading} className="mb-3 text-xl font-semibold tracking-tight">
-        GBP → {currency}{mode === "send" ? ` (${SEND_COUNTRIES[currency] ?? "Unsupported destination"})` : ""}
+        {sourceCurrency} → {currency}{mode === "send" ? ` (${SEND_COUNTRIES[currency] ?? "Unsupported destination"})` : ""}
       </h2>
       <p className="mb-4 text-sm leading-6 text-muted-foreground">
         Last fetched: {formatFetchedAt(lastFetched)}
@@ -55,11 +57,13 @@ function CurrencySection({ currency, pairs, days = 30, mode = "convert" }) {
           points={rows}
           loading={!preparedPairs.length}
           days={days}
+          sourceCurrency={sourceCurrency}
+          senderCountry={senderCountry}
           mode={mode}
         />
       </ViewPanel>
       <ViewPanel view="table">
-        <QuoteTable heading={heading} currency={currency} pairs={preparedPairs} mode={mode} />
+        <QuoteTable heading={heading} currency={currency} pairs={preparedPairs} sourceCurrency={sourceCurrency} mode={mode} />
       </ViewPanel>
     </section>
   );
@@ -67,7 +71,7 @@ function CurrencySection({ currency, pairs, days = 30, mode = "convert" }) {
 
 function groupSnapshots(snapshots) {
   return Object.fromEntries(
-    CURRENCIES.map((code) => [
+    [...new Set(snapshots.map((snapshot) => snapshot.currency))].map((code) => [
       code,
       snapshots.filter((pair) => pair.currency === code),
     ]).filter(([, pairs]) => pairs.length),
