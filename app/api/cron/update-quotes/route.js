@@ -1,3 +1,4 @@
+import { summarizeQuoteUpdate, serializeUpdateResponse } from "../../../../lib/quote-update-result.js";
 import { SENDER_COUNTRIES, targetCurrencies } from "../../../../lib/sender-countries.js";
 import { fetchAndStoreSend } from "../../../../lib/fetch-send.js";
 import { fetchAndStoreConversion } from "../../../../lib/fetch-conversion.js";
@@ -23,31 +24,25 @@ export async function GET(request) {
   const countries = selectedCountry ? [selectedCountry] : Object.keys(SENDER_COUNTRIES);
   const jobs = [["convert", fetchAndStoreConversion], ["send", fetchAndStoreSend]].flatMap(([mode, update]) => countries.flatMap((senderCountry) => targetCurrencies(CURRENCIES, senderCountry).flatMap((currency) =>
     AMOUNTS_GBP.map(async (amount) => {
-      const response = await update(
-        new Request(
-          `https://internal/api/convert?currency=${currency}&gbpAmount=${amount}&senderCountry=${senderCountry}`,
-        ),
-      );
-      const result = await response.json();
-      return {
-        mode,
-        senderCountry,
-        currency,
-        amount,
-        saved: result.storage?.saved === true,
-        providerErrors: result.errors ?? [],
-        error: result.storage?.error ?? result.error ?? null,
-      };
+      const context = { mode, senderCountry, sourceCurrency: SENDER_COUNTRIES[senderCountry].currency, currency, amount };
+      try {
+        const response = await update(
+          new Request(`https://internal/api/${mode}?currency=${currency}&gbpAmount=${amount}&senderCountry=${senderCountry}`),
+        );
+        return summarizeQuoteUpdate(context, await response.json(), response.status);
+      } catch (error) {
+        return summarizeQuoteUpdate(context, { error: error?.message ?? "Unexpected update failure" });
+      }
     }),
   )));
-  const results = await Promise.allSettled(jobs);
-  const completed = results.filter((result) => result.status === "fulfilled").map((result) => result.value);
-  const failed = results.filter((result) => result.status === "rejected").map((result) => ({ error: result.reason?.message ?? "Update failed" }));
-
-  return Response.json({
-    updatedAt: new Date().toISOString(),
-    total: results.length,
-    completed,
-    failed,
-  }, { status: failed.length ? 207 : 200, headers: { "Cache-Control": "no-store" } });
+  const results = await Promise.all(jobs);
+  const quotes = { Wise: 0, Revolut: 0 };
+  for (const result of results) {
+    for (const provider of Object.keys(quotes)) quotes[provider] += result.quotes[provider];
+  }
+  const failures = results.flatMap((result) => result.failures);
+  return new Response(serializeUpdateResponse(quotes, failures), {
+    status: failures.length ? 207 : 200,
+    headers: { "Cache-Control": "no-store", "Content-Type": "application/json" },
+  });
 }
