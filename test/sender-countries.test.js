@@ -8,15 +8,14 @@ import { targetCurrencies } from '../lib/sender-countries.js';
 
 test('Country storage separates EUR markets while retaining legacy UK snapshots',()=>{
  assert.deepEqual(countryMatch('IE'),{senderCountry:'IE'});
- assert.deepEqual(countryMatch('ES'),{senderCountry:'ES'});
  assert.equal(countryMatch('GB').$or[1].sourceCurrency,'GBP');
  assert.deepEqual(targetCurrencies(['EUR','USD'],'IE'),['USD','GBP']);
  const doc=conversionDocument({senderCountry:'IE',sourceCurrency:'EUR',currency:'GBP',amount:100,fetchedAt:new Date().toISOString(),quotes:[],errors:[]});
  assert.equal(doc.senderCountry,'IE');assert.equal(doc.sourceCurrency,'EUR');
 });
-test('Ireland and Spain request EUR quotes with correct account country and EUR paid-plan estimates',async(t)=>{
+test('Ireland requests EUR quotes with correct account country and EUR paid-plan estimates',async(t)=>{
  t.mock.method(conversionStore,'save',async()=> 'id');t.mock.method(sendStore,'save',async()=> 'id');
- for(const country of ['IE','ES']) {
+ for(const country of ['IE']) {
  t.mock.method(globalThis,'fetch',async(url)=>{
  const u=new URL(url);
  if(u.hostname==='wise.com'){
@@ -35,4 +34,13 @@ test('Ireland and Spain request EUR quotes with correct account country and EUR 
  assert.deepEqual(result.errors,[]);assert.equal(result.quotes.length, update === fetchAndStoreConversion ? 6 : 2);assert.equal(result.quotes[1].receivedAmount,84.15);assert.equal(result.sourceCurrency,'EUR');
  }
  }
+});
+
+test('Spain profiles are rejected before fetching or saving quotes', async (t) => {
+ t.mock.method(globalThis, 'fetch', async () => { throw new Error('Must not fetch'); });
+ for (const update of [fetchAndStoreConversion, fetchAndStoreSend]) {
+  const response = await update(new Request('http://localhost/?senderCountry=ES&currency=GBP&amount=100'));
+  assert.equal(response.status, 400);
+ }
+ assert.equal(globalThis.fetch.mock.callCount(), 0);
 });

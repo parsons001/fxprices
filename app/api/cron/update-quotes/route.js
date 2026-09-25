@@ -7,6 +7,7 @@ import { CURRENCIES, AMOUNTS_GBP } from "../../../../lib/currencies.js";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 export const runtime = "nodejs";
+const UPDATE_COUNTRIES = ["GB", "IE"];
 
 function isAuthorized(request) {
   const secret = process.env.CRON_SECRET;
@@ -20,8 +21,8 @@ export async function GET(request) {
   }
 
   const selectedCountry = new URL(request.url).searchParams.get("senderCountry");
-  if (selectedCountry && !Object.hasOwn(SENDER_COUNTRIES, selectedCountry)) return Response.json({ error: "Unsupported sending country" }, { status: 400 });
-  const countries = selectedCountry ? [selectedCountry] : Object.keys(SENDER_COUNTRIES);
+  if (selectedCountry && !UPDATE_COUNTRIES.includes(selectedCountry)) return Response.json({ error: "Quote updates are supported only for GB and IE profiles." }, { status: 400 });
+  const countries = selectedCountry ? [selectedCountry] : UPDATE_COUNTRIES;
   const jobs = [["convert", fetchAndStoreConversion], ["send", fetchAndStoreSend]].flatMap(([mode, update]) => countries.flatMap((senderCountry) => targetCurrencies(CURRENCIES, senderCountry).flatMap((currency) =>
     AMOUNTS_GBP.map(async (amount) => {
       const context = { mode, senderCountry, sourceCurrency: SENDER_COUNTRIES[senderCountry].currency, currency, amount };
