@@ -1,56 +1,8 @@
-import { SENDER_COUNTRIES, senderConfig, targetCurrencies } from "../../lib/sender-countries";
-import { RANGE_OPTIONS } from "../../lib/chart-history";
-import FilterControls from "../../components/filter-controls";
-import Converter from "../../components/converter";
-import { CURRENCIES, AMOUNTS_GBP } from "../../lib/currencies";
-import { conversionStore } from "../../lib/conversion-store";
+import QuotePage from "../../components/quotes/quote-page";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-
-export default async function Page({ searchParams = {} }) {
-  const params = await searchParams;
-  const senderCountry = Object.hasOwn(SENDER_COUNTRIES, params.senderCountry) ? params.senderCountry : "GB";
-  const sourceCurrency = senderConfig(senderCountry).currency;
-  const currencies = targetCurrencies(CURRENCIES, senderCountry);
-  let snapshots = [];
-  let selectedCurrency = currencies.includes("EUR") ? "EUR" : currencies.includes("GBP") ? "GBP" : currencies[0];
-  let selectedAmount = String(
-    AMOUNTS_GBP.includes(1000) ? 1000 : AMOUNTS_GBP[0],
-  );
-  let selectedDays = 30;
-
-  const rawCurrency =
-    typeof params.currency === "string" ? params.currency.toUpperCase() : "";
-  const rawAmount =
-    typeof params.gbpAmount === "string" ? Number(params.gbpAmount) : null;
-  const rawDays = Number(params.days ?? "30");
-
-  if (rawCurrency && currencies.includes(rawCurrency)) {
-    selectedCurrency = rawCurrency;
-  }
-  if (rawAmount !== null && AMOUNTS_GBP.includes(rawAmount)) {
-    selectedAmount = String(rawAmount);
-  }
-  if (RANGE_OPTIONS.includes(rawDays)) {
-    selectedDays = rawDays;
-  }
-
-  try {
-    snapshots = await conversionStore.history({
-      senderCountry,
-      days: selectedDays,
-      currency: selectedCurrency || null,
-      amount: selectedAmount || null,
-    });
-  } catch {
-    snapshots = [];
-  }
-
-  const quoteDates = [...new Set(snapshots.map((snapshot) => new Date(snapshot.fetchedAt).toISOString()))].sort().reverse();
-  return <>
-    <FilterControls amounts={AMOUNTS_GBP} currencies={currencies} senderCountry={senderCountry} sourceCurrency={sourceCurrency} quoteDates={quoteDates} />
-    <Converter senderCountry={senderCountry} sourceCurrency={sourceCurrency} snapshots={snapshots} selectedDays={selectedDays} />
-  </>;
+export default function Page({ searchParams }) {
+  return <QuotePage mode="convert" searchParams={searchParams} />;
 }

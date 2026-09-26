@@ -43,11 +43,33 @@
     margin: 0;
   }
 
-  :is(a[href], button, select, summary, [role="button"], [role="link"], [role="combobox"], [role="option"], [role="tab"], [role="menuitem"], input[type="button"], input[type="submit"], input[type="reset"]):not(:disabled):not([aria-disabled="true"]):not([data-disabled]) {
+  :is(
+      a[href],
+      button,
+      select,
+      summary,
+      [role="button"],
+      [role="link"],
+      [role="combobox"],
+      [role="option"],
+      [role="tab"],
+      [role="menuitem"],
+      input[type="button"],
+      input[type="submit"],
+      input[type="reset"]
+    ):not(:disabled):not([aria-disabled="true"]):not([data-disabled]) {
     cursor: pointer;
   }
 
-  :is(button, select, input, [role="button"], [role="combobox"], [role="option"], [role="tab"]):is(:disabled, [aria-disabled="true"], [data-disabled]) {
+  :is(
+    button,
+    select,
+    input,
+    [role="button"],
+    [role="combobox"],
+    [role="option"],
+    [role="tab"]
+  ):is(:disabled, [aria-disabled="true"], [data-disabled]) {
     cursor: not-allowed;
   }
 }

@@ -26,9 +26,9 @@ Currency sections include provider tables and markup charts. Revolut fees are de
 - `GET /api/cron/update-quotes`: manually triggered endpoint that refreshes every supported currency and GBP amount. Requires `Authorization: Bearer <CRON_SECRET>`; missing or incorrect tokens return HTTP 401.
 - `app/page.js`: loads saved results on the server.
 - `components/`: converter filters, tables, notes and charts.
-- `lib/conversion-store.js`: MongoDB snapshot reads and writes.
-- `lib/fetch-conversion.js`: ingestion helper used by the protected update endpoint.
-- `revolut-plans.js`: existing conversion and plan calculations.
+- `lib/db/conversion-store.js`: MongoDB snapshot reads and writes.
+- `lib/providers/fetch-conversion.js`: ingestion helper used by the protected update endpoint.
+- `lib/providers/revolut-plans.js`: existing conversion and plan calculations.
 
 `npm test` checks calculations, ingestion and the read-only public endpoint.
 
@@ -56,7 +56,7 @@ The bearer-protected `/api/cron/update-quotes` now updates both Convert and Send
 
 Send uses Wise `gateway/v1/price` with `BALANCE` funding and `BANK_TRANSFER` payout. Revolut uses `api/remittance/routes`, selecting `BANK` and the API's plan fees. Source amounts are major GBP units for Wise and minor GBP units for Revolut. Revolut received amounts deduct the API total fee from the GBP budget before applying the quoted rate. No conversion-plan fee estimates are reused for transfers.
 
-Recipient countries are explicit in `lib/send-countries.js`: EUR→ES, AED→AE, AUD→AU, CAD→CA, USD→US, PLN→PL, RON→RO, CHF→CH, ZAR→ZA, INR→IN, PHP→PH, BDT→BD, PKR→PK, JPY→JP. The country is shown on Send. Unsupported currency/country mappings return an error instead of using an unrelated route. Intermediary-bank fees are not included in the comparison.
+Recipient countries are explicit in `lib/config/send-countries.js`: EUR→ES, AED→AE, AUD→AU, CAD→CA, USD→US, PLN→PL, RON→RO, CHF→CH, ZAR→ZA, INR→IN, PHP→PH, BDT→BD, PKR→PK, JPY→JP. The country is shown on Send. Unsupported currency/country mappings return an error instead of using an unrelated route. Intermediary-bank fees are not included in the comparison.
 
 ## Sending country
 
@@ -67,3 +67,19 @@ Requests and snapshots carry `senderCountry` and `sourceCurrency`. Wise receives
 The protected update endpoint refreshes United Kingdom and Ireland profiles only. Add `?senderCountry=IE` or `?senderCountry=GB` to update one country. Spain updates are disabled, including explicit `?senderCountry=ES` requests. Spain is not a supported profile in the dropdown or read-only endpoints. No live quote fetching occurs when viewing the pages.
 
 For backward compatibility, stored quote properties named `feeGbp`, `costGbp` and related fee fields contain values in the snapshot's `sourceCurrency`; always use that field to interpret amounts. Existing `gbpAmount` query parameters remain supported; ingestion also accepts `amount`.
+
+## Code organization
+
+- `app/`: Next.js routes, page entry points and layouts.
+- `components/layout/`: navigation and page headings.
+- `components/quotes/`: quote pages, filters, tables and notes.
+- `components/charts/`: markup chart presentation.
+- `components/ui/`: reusable UI primitives.
+- `lib/api/`: shared API handlers and metadata responses.
+- `lib/config/`: supported currencies, amounts and countries.
+- `lib/db/`: MongoDB access, snapshot stores and write queue.
+- `lib/providers/`: Wise/Revolut fetching and Revolut plan calculations.
+- `lib/quotes/`: filters, fee comparisons, snapshots and update summaries.
+- `lib/charts/`: history aggregation and CSV exports.
+- `lib/utils/`: formatting and CSS class helpers.
+- `test/`: automated tests.

@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "serve": "next start",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "format": "prettier --write app components lib test",
+    "format:check": "prettier --check app components lib test"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.3.7",
@@ -25,5 +27,8 @@
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.9"
   }
 }

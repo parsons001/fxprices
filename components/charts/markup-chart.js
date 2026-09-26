@@ -1,10 +1,10 @@
 "use client";
 
-import { aggregateHistory, rangeLabel } from "../lib/chart-history";
-import { chartCsv } from "../lib/chart-csv";
-import { formatPct } from "../lib/format";
-import { Card, CardContent, CardHeader } from "./ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
+import { aggregateHistory, rangeLabel } from "../../lib/charts/chart-history";
+import { chartCsv } from "../../lib/charts/chart-csv";
+import { formatPct } from "../../lib/utils/format";
+import { Card, CardContent, CardHeader } from "../ui/card";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 const COLORS = [
@@ -16,7 +16,15 @@ const COLORS = [
   "#0369a1",
 ];
 
-export default function MarkupChart({ points, currency, loading, days = 30, mode = "convert", sourceCurrency = "GBP", senderCountry = "GB" }) {
+export default function MarkupChart({
+  points,
+  currency,
+  loading,
+  days = 30,
+  mode = "convert",
+  sourceCurrency = "GBP",
+  senderCountry = "GB",
+}) {
   const valid = points.filter((point) => Number.isFinite(point.markup));
   if (!valid.length)
     return (
@@ -31,14 +39,26 @@ export default function MarkupChart({ points, currency, loading, days = 30, mode
       </Card>
     );
 
-  const { hourly, series: providerSeries, chartData } = aggregateHistory(valid, days);
-  const series = providerSeries.map((entry, index) => ({ ...entry, color: COLORS[index % COLORS.length] }));
-  const markupValues = chartData.flatMap((row) => series.map((entry) => row[entry.key])).filter(Number.isFinite);
-  const dateLabel = (value, tooltip = false) => new Date(value).toLocaleString("en-GB", {
-    timeZone: "UTC", month: "short", day: "numeric",
-    ...(hourly ? { hour: "2-digit", minute: "2-digit", hour12: false } : {}),
-    ...(tooltip ? { year: "numeric" } : {}),
-  });
+  const {
+    hourly,
+    series: providerSeries,
+    chartData,
+  } = aggregateHistory(valid, days);
+  const series = providerSeries.map((entry, index) => ({
+    ...entry,
+    color: COLORS[index % COLORS.length],
+  }));
+  const markupValues = chartData
+    .flatMap((row) => series.map((entry) => row[entry.key]))
+    .filter(Number.isFinite);
+  const dateLabel = (value, tooltip = false) =>
+    new Date(value).toLocaleString("en-GB", {
+      timeZone: "UTC",
+      month: "short",
+      day: "numeric",
+      ...(hourly ? { hour: "2-digit", minute: "2-digit", hour12: false } : {}),
+      ...(tooltip ? { year: "numeric" } : {}),
+    });
   const min = Math.min(0, ...markupValues);
   const max = Math.max(0, ...markupValues);
   const padding = Math.max((max - min) * 0.15, 1);
@@ -58,8 +78,19 @@ export default function MarkupChart({ points, currency, loading, days = 30, mode
 
   function downloadCsv() {
     const amount = valid[0]?.amount;
-    const csv = chartCsv({ chartData, series, currency, amount, mode, hourly, sourceCurrency, senderCountry });
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const csv = chartCsv({
+      chartData,
+      series,
+      currency,
+      amount,
+      mode,
+      hourly,
+      sourceCurrency,
+      senderCountry,
+    });
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+    );
     const link = document.createElement("a");
     link.href = url;
     link.download = `${mode}-${senderCountry}-${sourceCurrency}-${currency}-${amount}-${days}d.csv`;
@@ -74,11 +105,21 @@ export default function MarkupChart({ points, currency, loading, days = 30, mode
       <CardHeader className="border-b px-5 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-semibold">Markup history</h3>
-          <button type="button" onClick={downloadCsv} className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2">Download CSV</button>
+          <button
+            type="button"
+            onClick={downloadCsv}
+            className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2"
+          >
+            Download CSV
+          </button>
         </div>
         <p className="text-sm leading-6 text-muted-foreground">
-          Markup vs Wise mid-market: {rangeLabel(days).toLowerCase()} for the selected
-          amount and currency. {hourly ? "Hourly points (averaged when multiple quotes fall in the same hour)." : "Daily average markup."} Times are UTC. 0% matches mid-market.
+          Markup vs Wise mid-market: {rangeLabel(days).toLowerCase()} for the
+          selected amount and currency.{" "}
+          {hourly
+            ? "Hourly points (averaged when multiple quotes fall in the same hour)."
+            : "Daily average markup."}{" "}
+          Times are UTC. 0% matches mid-market.
         </p>
       </CardHeader>
       <CardContent className="min-w-0 overflow-hidden px-3 pt-6 sm:px-6">

@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizeSnapshots } from "../lib/snapshot.js";
-import { money } from "../lib/format.js";
-import { conversionStore } from "../lib/conversion-store.js";
+import { normalizeSnapshots } from "../lib/quotes/snapshot.js";
+import { money } from "../lib/utils/format.js";
+import { conversionStore } from "../lib/db/conversion-store.js";
 import { GET } from "../app/api/convert/route.js";
 
 test("Public route only reads saved snapshots and filters them", async (t) => {

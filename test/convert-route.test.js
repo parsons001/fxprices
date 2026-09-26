@@ -1,12 +1,12 @@
 import {
   conversionStore,
   conversionDocument,
-} from "../lib/conversion-store.js";
+} from "../lib/db/conversion-store.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fetchAndStoreConversion as GET } from "../lib/fetch-conversion.js";
+import { fetchAndStoreConversion as GET } from "../lib/providers/fetch-conversion.js";
 import { GET as metadata } from "../app/api/convert/meta/route.js";
-import { markupFor, formatPct } from "../lib/format.js";
+import { markupFor, formatPct } from "../lib/utils/format.js";
 
 test("Conversion metadata and validation remain compatible", async () => {
   const meta = await metadata().json();

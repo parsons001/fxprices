@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useId } from "react";
 import { ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
-import { cn } from "../../lib/utils";
+import { cn } from "../../lib/utils/utils";
 
 const ChartContext = React.createContext(null);
 

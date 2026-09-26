@@ -4,7 +4,7 @@ import {
   estimatePaidPlans,
   fixedBudgetQuote,
   liveRevolutQuote,
-} from "../revolut-plans.js";
+} from "../lib/providers/revolut-plans.js";
 const quote = (amountGbp, weekend = false, usedAllowanceGbp = 0) =>
   estimatePaidPlans({
     amountGbp,
@@ -99,13 +99,21 @@ test("Live fees are deducted from the sending budget before conversion", () => {
   assert.throws(() => liveRevolutQuote(quote, plan, "JPY", 100, 0));
 });
 
-test('EUR paid-plan estimates apply the €3,000 allowance and weekend fee', () => {
-  const estimate = (amountGbp, weekend) => estimatePaidPlans({ sourceCurrency: 'EUR', amountGbp, rate: 0.85, weekend });
+test("EUR paid-plan estimates apply the €3,000 allowance and weekend fee", () => {
+  const estimate = (amountGbp, weekend) =>
+    estimatePaidPlans({
+      sourceCurrency: "EUR",
+      amountGbp,
+      rate: 0.85,
+      weekend,
+    });
   assert.equal(estimate(3000, false)[0].feeGbp, 0);
   assert.equal(estimate(5000, false)[0].feeGbp, 10);
   const plans = estimate(5000, true);
   assert.equal(plans[0].feeGbp, 35);
   assert.equal(plans[0].receivedAmount, 4220.25);
-  assert.ok(plans.every(plan => plan.sourceCurrency === 'EUR' && plan.estimated));
-  assert.ok(plans.slice(1).every(plan => plan.feeGbp === 0));
+  assert.ok(
+    plans.every((plan) => plan.sourceCurrency === "EUR" && plan.estimated),
+  );
+  assert.ok(plans.slice(1).every((plan) => plan.feeGbp === 0));
 });
