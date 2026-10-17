@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizeSnapshots } from "../lib/quotes/snapshot.js";
+import {
+  normalizeSnapshots,
+  sortQuotesForDisplay,
+} from "../lib/quotes/snapshot.js";
 import { money } from "../lib/utils/format.js";
 import { conversionStore } from "../lib/db/conversion-store.js";
 import { GET } from "../app/api/convert/route.js";
@@ -44,6 +47,32 @@ test("Saved snapshots are normalized for incomplete data", () => {
   assert.deepEqual(normalized[0].quotes, []);
   assert.deepEqual(normalized[0].errors, []);
   assert.deepEqual(normalized[0].storage, {});
+});
+
+test("Convert and Send quotes use the same provider and plan order", () => {
+  const convertQuotes = [
+    { provider: "Revolut", planId: "ULTRA" },
+    { provider: "Wise" },
+    { provider: "Revolut", planId: "PLUS" },
+    { provider: "Revolut", planId: "STANDARD" },
+  ];
+  const sendQuotes = [
+    { provider: "Revolut", planId: "STANDARD" },
+    { provider: "Revolut", planId: "PLUS" },
+    { provider: "Wise" },
+    { provider: "Revolut", planId: "ULTRA" },
+  ];
+  const order = (quotes) =>
+    sortQuotesForDisplay(quotes).map(
+      (quote) => `${quote.provider}:${quote.planId ?? ""}`,
+    );
+  assert.deepEqual(order(convertQuotes), order(sendQuotes));
+  assert.deepEqual(order(convertQuotes), [
+    "Wise:",
+    "Revolut:STANDARD",
+    "Revolut:PLUS",
+    "Revolut:ULTRA",
+  ]);
 });
 
 test("Currency formatting stays stable across runtimes", () => {

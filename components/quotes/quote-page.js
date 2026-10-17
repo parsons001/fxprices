@@ -17,8 +17,10 @@ export default async function QuotePage({
     selectedCurrency,
     selectedAmount,
     selectedDays,
+    selectedProviders,
   } = resolveQuoteFilters(await searchParams);
   let snapshots = [];
+  let conversionFeesUnavailable = false;
   const store = mode === "send" ? sendStore : conversionStore;
   try {
     snapshots = await store.history({
@@ -32,10 +34,18 @@ export default async function QuotePage({
   }
 
   if (mode === "send") {
-    const latestConvert = await conversionStore
-      .latest({ senderCountry })
-      .catch(() => []);
-    snapshots = attachConversionFees(snapshots, latestConvert);
+    let conversions = [];
+    try {
+      conversions = await conversionStore.history({
+        senderCountry,
+        days: selectedDays,
+        currency: selectedCurrency || null,
+        amount: selectedAmount || null,
+      });
+    } catch {
+      conversionFeesUnavailable = true;
+    }
+    snapshots = attachConversionFees(snapshots, conversions);
   }
 
   const quoteDates = [
@@ -53,13 +63,24 @@ export default async function QuotePage({
         senderCountry={senderCountry}
         sourceCurrency={sourceCurrency}
         quoteDates={quoteDates}
+        selectedProviders={selectedProviders}
       />
+      {conversionFeesUnavailable && (
+        <div
+          role="alert"
+          className="mt-6 rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm text-amber-950"
+        >
+          Conversion fees could not be loaded. International payment fees are
+          temporarily unavailable and appear as —. Try refreshing the page.
+        </div>
+      )}
       <Converter
         mode={mode}
         senderCountry={senderCountry}
         sourceCurrency={sourceCurrency}
         snapshots={snapshots}
         selectedDays={selectedDays}
+        selectedProviders={selectedProviders}
       />
     </>
   );

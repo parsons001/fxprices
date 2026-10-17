@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { additionalFeeRows } from "../lib/quotes/additional-fees.js";
-test("Additional fees match currency, amount and plan, retaining negative and missing values", () => {
+test("Additional fees match currency, amount and plan, remain nonnegative, and preserve missing values", () => {
   const base = {
     currency: "EUR",
     amount: 100,
@@ -38,7 +38,7 @@ test("Additional fees match currency, amount and plan, retaining negative and mi
   ];
   const rows = additionalFeeRows(send, convert);
   assert.equal(rows.find((r) => r.provider === "Wise").additionalFee, 1);
-  assert.equal(rows.find((r) => r.plan === "Standard").additionalFee, -1);
+  assert.equal(rows.find((r) => r.plan === "Standard").additionalFee, 0);
   assert.equal(rows.find((r) => r.plan === "Plus").additionalFee, null);
   assert.ok(
     additionalFeeRows(send, [{ ...convert[0], amount: 500 }]).every(

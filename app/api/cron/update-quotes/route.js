@@ -1,3 +1,4 @@
+import { mapConcurrent } from "../../../../lib/utils/map-concurrent.js";
 import {
   summarizeQuoteUpdate,
   serializeUpdateResponse,
@@ -6,8 +7,8 @@ import {
   SENDER_COUNTRIES,
   targetCurrencies,
 } from "../../../../lib/config/sender-countries.js";
-import { fetchAndStoreSend } from "../../../../lib/providers/fetch-send.js";
-import { fetchAndStoreConversion } from "../../../../lib/providers/fetch-conversion.js";
+import { updateSend } from "../../../../lib/providers/fetch-send.js";
+import { updateConversion } from "../../../../lib/providers/fetch-conversion.js";
 import { CURRENCIES, AMOUNTS_GBP } from "../../../../lib/config/currencies.js";
 
 export const dynamic = "force-dynamic";
@@ -36,12 +37,12 @@ export async function GET(request) {
     );
   const countries = selectedCountry ? [selectedCountry] : UPDATE_COUNTRIES;
   const jobs = [
-    ["convert", fetchAndStoreConversion],
-    ["send", fetchAndStoreSend],
+    ["convert", updateConversion],
+    ["send", updateSend],
   ].flatMap(([mode, update]) =>
     countries.flatMap((senderCountry) =>
       targetCurrencies(CURRENCIES, senderCountry).flatMap((currency) =>
-        AMOUNTS_GBP.map(async (amount) => {
+        AMOUNTS_GBP.map((amount) => async () => {
           const context = {
             mode,
             senderCountry,
@@ -50,16 +51,8 @@ export async function GET(request) {
             amount,
           };
           try {
-            const response = await update(
-              new Request(
-                `https://internal/api/${mode}?currency=${currency}&gbpAmount=${amount}&senderCountry=${senderCountry}`,
-              ),
-            );
-            return summarizeQuoteUpdate(
-              context,
-              await response.json(),
-              response.status,
-            );
+            const result = await update({ amount, currency, senderCountry });
+            return summarizeQuoteUpdate(context, result);
           } catch (error) {
             return summarizeQuoteUpdate(context, {
               error: error?.message ?? "Unexpected update failure",
@@ -69,7 +62,15 @@ export async function GET(request) {
       ),
     ),
   );
-  const results = await Promise.all(jobs);
+  let results;
+  try {
+    results = await mapConcurrent(jobs, 32);
+  } catch {
+    return Response.json(
+      { success: false, error: "Quote update failed unexpectedly." },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    );
+  }
   const quotes = { Wise: 0, Revolut: 0 };
   for (const result of results) {
     for (const provider of Object.keys(quotes))

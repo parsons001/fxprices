@@ -6,7 +6,14 @@ import QuoteTable from "./quote-table";
 import { ViewPanel } from "./view-tabs";
 import { SENDER_COUNTRIES } from "../../lib/config/sender-countries";
 import { quoteLabel, markupFor, money } from "../../lib/utils/format";
-import { normalizeSnapshots } from "../../lib/quotes/snapshot";
+import {
+  normalizeSnapshots,
+  sortQuotesForDisplay,
+} from "../../lib/quotes/snapshot";
+import {
+  DEFAULT_SELECTED_PROVIDERS,
+  isQuoteProviderSelected,
+} from "../../lib/quotes/quote-filters";
 
 export default function Converter({
   snapshots,
@@ -14,6 +21,7 @@ export default function Converter({
   mode = "convert",
   sourceCurrency = "GBP",
   senderCountry = "GB",
+  selectedProviders = DEFAULT_SELECTED_PROVIDERS,
 }) {
   const safeSnapshots = normalizeSnapshots(snapshots);
   const groups = groupSnapshots(safeSnapshots);
@@ -41,6 +49,7 @@ export default function Converter({
             mode={mode}
             sourceCurrency={sourceCurrency}
             senderCountry={senderCountry}
+            selectedProviders={selectedProviders}
           />
         ))}
       </div>
@@ -82,8 +91,11 @@ function CurrencySection({
   mode = "convert",
   sourceCurrency = "GBP",
   senderCountry = "GB",
+  selectedProviders = DEFAULT_SELECTED_PROVIDERS,
 }) {
-  const preparedPairs = pairs.map(preparePair);
+  const preparedPairs = pairs.map((pair) =>
+    preparePair(pair, selectedProviders),
+  );
   const rows = preparedPairs.flatMap(({ rows: pairRows }) => pairRows);
   const lastFetched = preparedPairs
     .map(({ pair }) => pair.fetchedAt)
@@ -145,7 +157,7 @@ function groupSnapshots(snapshots) {
   );
 }
 
-function preparePair(pair) {
+function preparePair(pair, selectedProviders) {
   const normalizedPair = {
     ...pair,
     quotes: Array.isArray(pair.quotes) ? pair.quotes : [],
@@ -155,17 +167,19 @@ function preparePair(pair) {
   const midMarketRate = normalizedPair.quotes.find(
     (quote) => quote.provider === "Wise",
   )?.rate;
-  const rows = normalizedPair.quotes.map((quote) => {
-    const markup = markupFor(quote, midMarketRate);
-    return {
-      ...quote,
-      amount: normalizedPair.amount,
-      midMarketRate,
-      markup: Number.isFinite(markup) ? Math.abs(markup) : markup,
-      label: quoteLabel(quote),
-      fetchedAt: normalizedPair.fetchedAt,
-    };
-  });
+  const rows = sortQuotesForDisplay(normalizedPair.quotes)
+    .filter((quote) => isQuoteProviderSelected(quote, selectedProviders))
+    .map((quote) => {
+      const markup = markupFor(quote, midMarketRate);
+      return {
+        ...quote,
+        amount: normalizedPair.amount,
+        midMarketRate,
+        markup: Number.isFinite(markup) ? Math.abs(markup) : markup,
+        label: quoteLabel(quote),
+        fetchedAt: normalizedPair.fetchedAt,
+      };
+    });
   return { pair: normalizedPair, rows };
 }
 

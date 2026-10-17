@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import SiteNavigation from "../components/layout/site-navigation";
 export const metadata = {
@@ -25,6 +26,7 @@ export default function Layout({ children }) {
         <div id="workspace" className="min-w-0 lg:ml-56">
           {children}
         </div>
+        <Analytics />
       </body>
     </html>
   );

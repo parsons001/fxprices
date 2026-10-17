@@ -4,10 +4,27 @@ import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SelectField } from "../ui/select-field";
 import { SelectItem } from "../ui/select";
-import { useView, ViewSwitcher } from "./view-tabs";
+import { useViewState, ViewSwitcher } from "./view-tabs";
 import { RANGE_OPTIONS, rangeLabel } from "../../lib/charts/chart-history";
 import { SENDER_COUNTRIES } from "../../lib/config/sender-countries";
 import { money } from "../../lib/utils/format";
+import {
+  DEFAULT_SELECTED_PROVIDERS,
+  QUOTE_FILTER_OPTIONS,
+  resolveQuoteDate,
+} from "../../lib/quotes/quote-filters";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "../ui/combobox";
 
 function getDefaultCurrency(currencies) {
   return currencies.includes("EUR")
@@ -30,13 +47,14 @@ export default function FilterControls({
   amounts,
   currencies,
   quoteDates = [],
+  selectedProviders = DEFAULT_SELECTED_PROVIDERS,
   senderCountry = "GB",
   sourceCurrency = "GBP",
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const view = useView();
+  const { view, setIsLoading } = useViewState();
   const [isPending, startTransition] = useTransition();
   const [amount, setAmount] = useState(() =>
     initialValue(
@@ -57,6 +75,8 @@ export default function FilterControls({
   const [days, setDays] = useState(() =>
     initialValue(searchParams, "days", "30", RANGE_OPTIONS.map(String)),
   );
+  const [providers, setProviders] = useState(selectedProviders);
+  const providerAnchor = useComboboxAnchor();
 
   useEffect(() => {
     setAmount(
@@ -78,22 +98,36 @@ export default function FilterControls({
     setDays(
       initialValue(searchParams, "days", "30", RANGE_OPTIONS.map(String)),
     );
-  }, [amounts, currencies, searchParams]);
+    setProviders(selectedProviders);
+    setIsLoading(false);
+  }, [amounts, currencies, searchParams, selectedProviders]);
 
-  const quoteDate = initialValue(
-    searchParams,
-    "quoteDate",
-    quoteDates[0] ?? "",
-    quoteDates,
-  );
+  const quoteDate = resolveQuoteDate(searchParams.get("quoteDate"), quoteDates);
 
   function updateFilter(name, value, setValue = () => {}) {
     setValue(value);
     const next = new URLSearchParams(searchParams.toString());
     if (name === "senderCountry") next.delete("currency");
-    if (name !== "quoteDate") next.delete("quoteDate");
     if (value === "__all__") next.delete(name);
     else next.set(name, value);
+    setIsLoading(true);
+    startTransition(() =>
+      router.replace(`${pathname}${next.toString() ? `?${next}` : ""}`, {
+        scroll: false,
+      }),
+    );
+  }
+
+  function updateProviders(nextProviders) {
+    if (!nextProviders.length) return;
+    setProviders(nextProviders);
+    const next = new URLSearchParams(searchParams.toString());
+    if (nextProviders.length === DEFAULT_SELECTED_PROVIDERS.length) {
+      next.delete("providers");
+    } else {
+      next.set("providers", nextProviders.join(","));
+    }
+    setIsLoading(true);
     startTransition(() =>
       router.replace(`${pathname}${next.toString() ? `?${next}` : ""}`, {
         scroll: false,
@@ -112,10 +146,8 @@ export default function FilterControls({
           <h2 id="filter-heading" className="text-sm font-semibold">
             Filters
           </h2>
-          <p className="mt-1 text-xs text-muted-foreground" role="status">
-            {isPending
-              ? "Loading saved data…"
-              : "View saved quotes by market and amount."}
+          <p className="mt-1 text-xs text-muted-foreground">
+            View saved quotes by market and amount.
           </p>
         </div>
         <ViewSwitcher />
@@ -172,7 +204,7 @@ export default function FilterControls({
                   {new Date(date).toLocaleString("en-GB", {
                     timeZone: "UTC",
                     dateStyle: "medium",
-                    timeStyle: "medium",
+                    timeStyle: "short",
                   })}{" "}
                   UTC
                 </SelectItem>
@@ -197,6 +229,56 @@ export default function FilterControls({
             ))}
           </SelectField>
         )}
+        <div
+          className="grid min-w-0 gap-2 text-sm font-medium leading-none"
+          role="group"
+          aria-labelledby="provider-filter-label"
+        >
+          <span id="provider-filter-label">Providers</span>
+          <Combobox
+            multiple
+            autoHighlight
+            items={QUOTE_FILTER_OPTIONS.map(({ value }) => value)}
+            value={providers}
+            onValueChange={updateProviders}
+          >
+            <ComboboxChips ref={providerAnchor}>
+              <ComboboxValue>
+                {(values) => (
+                  <>
+                    {values.map((value) => (
+                      <ComboboxChip key={value}>
+                        {
+                          QUOTE_FILTER_OPTIONS.find(
+                            (option) => option.value === value,
+                          )?.label
+                        }
+                      </ComboboxChip>
+                    ))}
+                    <ComboboxChipsInput
+                      aria-label="Select providers"
+                      placeholder={values.length ? "" : "Select providers"}
+                    />
+                  </>
+                )}
+              </ComboboxValue>
+            </ComboboxChips>
+            <ComboboxContent anchor={providerAnchor}>
+              <ComboboxEmpty>No providers found.</ComboboxEmpty>
+              <ComboboxList>
+                {(value) => (
+                  <ComboboxItem key={value} value={value}>
+                    {
+                      QUOTE_FILTER_OPTIONS.find(
+                        (option) => option.value === value,
+                      )?.label
+                    }
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+        </div>
       </div>
     </section>
   );

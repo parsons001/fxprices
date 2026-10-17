@@ -2,7 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 
-import { formatPct, formatRate, money } from "../../lib/utils/format";
+import { formatPct, formatRate, money, trueCost } from "../../lib/utils/format";
+import { resolveQuoteDate } from "../../lib/quotes/quote-filters";
 import { Card, CardContent } from "../ui/card";
 import { Table } from "../ui/table";
 
@@ -12,8 +13,9 @@ const TABLE_HEADERS = [
   "Received",
   "Exchange rate",
   "Wise mid-market",
-  "Fees (GBP)",
+  "Displayed fees (GBP)",
   "Markup (%)",
+  "True cost (GBP)",
 ];
 
 export default function QuoteTable({
@@ -24,21 +26,14 @@ export default function QuoteTable({
   sourceCurrency = "GBP",
 }) {
   const isSend = mode === "send";
-  const headers = isSend
-    ? [
-        ...TABLE_HEADERS.slice(0, 6),
-        "International payment fee",
-        ...TABLE_HEADERS.slice(6),
-      ]
-    : TABLE_HEADERS;
-  const displayHeaders = headers.map((label) =>
+  const displayHeaders = TABLE_HEADERS.map((label) =>
     label.replaceAll("GBP", sourceCurrency),
   );
   const selectedDate = useSearchParams().get("quoteDate");
   const dates = [...new Set(pairs.map(({ pair }) => pair.fetchedAt))]
     .sort()
     .reverse();
-  const quoteDate = dates.includes(selectedDate) ? selectedDate : dates[0];
+  const quoteDate = resolveQuoteDate(selectedDate, dates);
   const selectedPairs = pairs.filter(
     ({ pair }) => pair.fetchedAt === quoteDate,
   );
@@ -82,13 +77,20 @@ export default function QuoteTable({
             </tbody>
           </Table>
         </CardContent>
-        {isSend && (
-          <p className="border-t bg-muted/20 px-5 py-4 text-xs leading-5 text-muted-foreground">
-            International payment fee = Send fee − latest matching Convert fee.
-            Values are in {sourceCurrency}. Negative values mean lower Send
-            fees; — means no matching fee is available.
-          </p>
-        )}
+        <p className="border-t bg-muted/20 px-5 py-4 text-xs leading-5 text-muted-foreground">
+          True cost is the displayed markup as a {sourceCurrency} amount (markup
+          percentage × budget). Markup is calculated from the amount received,
+          so it already reflects provider fees; displayed fees are shown
+          separately and are not added again.
+          {isSend && (
+            <>
+              {" "}
+              International payment fee = max(0, Send fee − nearest matching
+              Convert fee from the same time). Values are in {sourceCurrency}; —
+              means no nearby matching fee is available.
+            </>
+          )}
+        </p>
       </Card>
     </>
   );
@@ -100,7 +102,7 @@ function PairRows({ rows, pair, currency, isSend, sourceCurrency }) {
       {pair.storage?.saved === false && (
         <tr>
           <td>{money(pair.amount, sourceCurrency)}</td>
-          <td colSpan={isSend ? 7 : 6} role="alert">
+          <td colSpan={isSend ? 9 : 8} role="alert">
             {pair.storage.error}
           </td>
         </tr>
@@ -112,28 +114,32 @@ function PairRows({ rows, pair, currency, isSend, sourceCurrency }) {
           <td>{money(row.receivedAmount, currency)}</td>
           <td>{formatRate(row.rate)}</td>
           <td>{formatRate(row.midMarketRate)}</td>
-          <td>{money(row.feeGbp, sourceCurrency)}</td>
-          {isSend && (
-            <td
-              title={
-                row.convertFeeDate
-                  ? `Send fee minus latest saved Convert fee (${row.convertFeeDate})${row.convertFeeEstimated ? "; estimated Convert fee" : ""}`
-                  : "Matching Convert fee unavailable"
-              }
-            >
-              {row.additionalFeeGbp > 0 ? "+" : ""}
-              {money(row.additionalFeeGbp, sourceCurrency)}
-            </td>
-          )}
+          <td>
+            {money(row.feeGbp, sourceCurrency)}
+            {isSend && (
+              <span
+                className="block text-xs text-muted-foreground"
+                title={
+                  row.convertFeeDate
+                    ? `Send fee minus nearest saved Convert fee (${row.convertFeeDate})${row.convertFeeEstimated ? "; estimated Convert fee" : ""}`
+                    : "Nearby matching Convert fee unavailable"
+                }
+              >
+                International payment fee: {row.additionalFeeGbp > 0 ? "+" : ""}
+                {money(row.additionalFeeGbp, sourceCurrency)}
+              </span>
+            )}
+          </td>
           <td className={getMarkupClass(row.markup)}>
             {formatPct(row.markup)}
           </td>
+          <td>{money(trueCost(row.markup, row.costGbp), sourceCurrency)}</td>
         </tr>
       ))}
       {pair.errors.map((error, index) => (
         <tr key={`error-${index}`}>
           <td>{money(pair.amount, sourceCurrency)}</td>
-          <td colSpan={isSend ? 7 : 6}>
+          <td colSpan={isSend ? 9 : 8}>
             {error.provider ? `${error.provider}: ` : ""}
             {error.message}
           </td>

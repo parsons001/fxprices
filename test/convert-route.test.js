@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { fetchAndStoreConversion as GET } from "../lib/providers/fetch-conversion.js";
 import { GET as metadata } from "../app/api/convert/meta/route.js";
-import { markupFor, formatPct } from "../lib/utils/format.js";
+import { markupFor, formatPct, trueCost } from "../lib/utils/format.js";
 
 test("Conversion metadata and validation remain compatible", async () => {
   const meta = await metadata().json();
@@ -64,7 +64,10 @@ test("Route preserves fixed-budget calculations and partial provider failures", 
   assert.equal(standard.costGbp, 100);
   assert.equal(standard.receivedAmount, 118.8);
   assert.equal(standard.feeGbp, 1);
-  assert.equal(formatPct(markupFor(standard, 1.2)), "-1.00%");
+  assert.equal(formatPct(markupFor(standard, 1.2)), "-1.0000%");
+  assert.equal(trueCost(1, 100), 1);
+  assert.equal(trueCost(-1, 100), 1);
+  assert.equal(trueCost(null, 100), null);
   assert.equal(data.quotes.length, 6);
   assert.equal(data.storage.saved, true);
   assert.equal(

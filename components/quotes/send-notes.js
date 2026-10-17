@@ -8,8 +8,10 @@ export default function SendNotes() {
       (budget − quoted total fee) × quoted rate. Revolut transfer and exchange
       fees come from the remittance API for each plan; conversion-plan estimates
       are not used. Markup includes fees and uses the saved Wise mid-market
-      benchmark. Subscription costs and any additional intermediary-bank fees
-      are excluded.
+      benchmark. The International payment fee is the nonnegative difference
+      between a Send fee and the nearest matching Convert fee from the same
+      time. Subscription costs and any additional intermediary-bank fees are
+      excluded.
     </p>
   );
 }
