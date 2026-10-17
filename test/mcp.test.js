@@ -131,40 +131,11 @@ test("MCP overview exposes collection and market counts", async () => {
   );
 });
 
-test("MCP endpoint requires its own bearer secret and rejects missing configuration", async (t) => {
-  const savedToken = process.env.MCP_API_KEY;
-  process.env.MCP_API_KEY = "mcp-test-token";
-  t.after(() => {
-    if (savedToken === undefined) delete process.env.MCP_API_KEY;
-    else process.env.MCP_API_KEY = savedToken;
-  });
-  const badToken = await handleMcpRequest(
-    new Request("https://example.test/api/mcp", {
-      method: "POST",
-      headers: { Authorization: "Bearer invalid" },
-    }),
-  );
-  assert.equal(badToken.status, 401);
-
-  delete process.env.MCP_API_KEY;
-  const disabled = await handleMcpRequest(
-    new Request("https://example.test/api/mcp", { method: "POST" }),
-  );
-  assert.equal(disabled.status, 503);
-});
-
-test("MCP endpoint speaks stateless Streamable HTTP and lists read-only tools", async (t) => {
-  const savedToken = process.env.MCP_API_KEY;
-  process.env.MCP_API_KEY = "mcp-test-token";
-  t.after(() => {
-    if (savedToken === undefined) delete process.env.MCP_API_KEY;
-    else process.env.MCP_API_KEY = savedToken;
-  });
+test("MCP endpoint is public, speaks stateless Streamable HTTP, and lists read-only tools", async () => {
   const response = await handleMcpRequest(
     new Request("https://example.test/api/mcp", {
       method: "POST",
       headers: {
-        Authorization: "Bearer mcp-test-token",
         Accept: "application/json, text/event-stream",
         "Content-Type": "application/json",
       },
@@ -188,7 +159,6 @@ test("MCP endpoint speaks stateless Streamable HTTP and lists read-only tools", 
     new Request("https://example.test/api/mcp", {
       method: "POST",
       headers: {
-        Authorization: "Bearer mcp-test-token",
         Accept: "application/json, text/event-stream",
         "Content-Type": "application/json",
       },

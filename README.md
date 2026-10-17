@@ -23,7 +23,7 @@ Currency sections include provider tables and markup charts. Revolut fees are de
 
 - `GET /api/convert`: latest saved snapshots; optional `currency` and `gbpAmount` filters. Read-only.
 - `GET /api/convert/meta`: supported currencies and amounts.
-- `POST /api/mcp`: authenticated read-only MCP server for inspecting both saved quote collections.
+- `POST /api/mcp`: public, read-only MCP server for inspecting both saved quote collections.
 - `GET /api/cron/update-quotes`: manually triggered endpoint that refreshes every supported currency and GBP amount. Requires `Authorization: Bearer <CRON_SECRET>`; missing or incorrect tokens return HTTP 401.
 - `app/page.js`: loads saved results on the server.
 - `components/`: converter filters, tables, notes and charts.
@@ -31,13 +31,13 @@ Currency sections include provider tables and markup charts. Revolut fees are de
 - `lib/providers/fetch-conversion.js`: ingestion helper used by the protected update endpoint.
 - `lib/providers/revolut-plans.js`: existing conversion and plan calculations.
 
-MCP clients connect to `https://<deployed-host>/api/mcp` using Streamable HTTP and the `MCP_API_KEY` bearer token. The read-only tools are `get_quote_database_overview` (counts and date ranges by market) and `list_quote_snapshots` (paginated saved records from `conversion_snapshots` and `send_snapshots`, with country, currency, amount and date filters). Pagination is capped at 100 records per page.
+MCP clients connect to `https://<deployed-host>/api/mcp` using Streamable HTTP with no authentication. This endpoint is intentionally public: anyone who can reach it can read the saved quote data through `get_quote_database_overview` (counts and date ranges by market) and `list_quote_snapshots` (paginated saved records from `conversion_snapshots` and `send_snapshots`, with country, currency, amount and date filters). Pagination is capped at 100 records per page. The tools are read-only and cannot modify the database.
 
 `npm test` checks calculations, ingestion and the read-only public endpoint.
 
 ## Vercel deployment
 
-Set `MONGODB_URI`, `MONGODB_DB`, `CRON_SECRET` and `MCP_API_KEY` in the deployment environment (or `.env.local` for local development). `CRON_SECRET` protects quote updates; `MCP_API_KEY` is a separate bearer token for the read-only MCP endpoint. Generate a strong token with `openssl rand -hex 32` and do not reuse the cron secret. No Vercel cron schedule is configured. Deploy this change to remove the existing Vercel schedule.
+Set `MONGODB_URI`, `MONGODB_DB` and `CRON_SECRET` in the deployment environment (or `.env.local` for local development). `CRON_SECRET` protects quote updates; MCP access is public and does not use a key. No Vercel cron schedule is configured. Deploy this change to remove the existing Vercel schedule.
 
 Trigger an update manually with the secret set in your shell environment:
 
