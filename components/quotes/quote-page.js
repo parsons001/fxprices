@@ -3,8 +3,7 @@ import { resolveQuoteFilters } from "../../lib/quotes/quote-filters.js";
 import { conversionStore } from "../../lib/db/conversion-store.js";
 import { sendStore } from "../../lib/db/send-store.js";
 import { AMOUNTS_GBP } from "../../lib/config/currencies.js";
-import FilterControls from "./filter-controls";
-import Converter from "./converter";
+import QuoteContent from "./quote-content";
 
 export default async function QuotePage({
   searchParams = {},
@@ -48,40 +47,17 @@ export default async function QuotePage({
     snapshots = attachConversionFees(snapshots, conversions);
   }
 
-  const quoteDates = [
-    ...new Set(
-      snapshots.map((snapshot) => new Date(snapshot.fetchedAt).toISOString()),
-    ),
-  ]
-    .sort()
-    .reverse();
   return (
-    <>
-      <FilterControls
-        amounts={AMOUNTS_GBP}
-        currencies={currencies}
-        senderCountry={senderCountry}
-        sourceCurrency={sourceCurrency}
-        quoteDates={quoteDates}
-        selectedProviders={selectedProviders}
-      />
-      {conversionFeesUnavailable && (
-        <div
-          role="alert"
-          className="mt-6 rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm text-amber-950"
-        >
-          Conversion fees could not be loaded. International payment fees are
-          temporarily unavailable and appear as —. Try refreshing the page.
-        </div>
-      )}
-      <Converter
-        mode={mode}
-        senderCountry={senderCountry}
-        sourceCurrency={sourceCurrency}
-        snapshots={snapshots}
-        selectedDays={selectedDays}
-        selectedProviders={selectedProviders}
-      />
-    </>
+    <QuoteContent
+      amounts={AMOUNTS_GBP}
+      currencies={currencies}
+      senderCountry={senderCountry}
+      sourceCurrency={sourceCurrency}
+      selectedProviders={selectedProviders}
+      conversionFeesUnavailable={conversionFeesUnavailable}
+      mode={mode}
+      snapshots={snapshots}
+      selectedDays={selectedDays}
+    />
   );
 }

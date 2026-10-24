@@ -4,14 +4,12 @@ import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SelectField } from "../ui/select-field";
 import { SelectItem } from "../ui/select";
-import { useViewState, ViewSwitcher } from "./view-tabs";
 import { RANGE_OPTIONS, rangeLabel } from "../../lib/charts/chart-history";
 import { SENDER_COUNTRIES } from "../../lib/config/sender-countries";
 import { money } from "../../lib/utils/format";
 import {
   DEFAULT_SELECTED_PROVIDERS,
   QUOTE_FILTER_OPTIONS,
-  resolveQuoteDate,
 } from "../../lib/quotes/quote-filters";
 import {
   Combobox,
@@ -46,15 +44,14 @@ function initialValue(searchParams, name, fallback, options) {
 export default function FilterControls({
   amounts,
   currencies,
-  quoteDates = [],
   selectedProviders = DEFAULT_SELECTED_PROVIDERS,
   senderCountry = "GB",
   sourceCurrency = "GBP",
+  onLoadingChange = () => {},
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { view, setIsLoading } = useViewState();
   const [isPending, startTransition] = useTransition();
   const [amount, setAmount] = useState(() =>
     initialValue(
@@ -99,18 +96,16 @@ export default function FilterControls({
       initialValue(searchParams, "days", "30", RANGE_OPTIONS.map(String)),
     );
     setProviders(selectedProviders);
-    setIsLoading(false);
   }, [amounts, currencies, searchParams, selectedProviders]);
 
-  const quoteDate = resolveQuoteDate(searchParams.get("quoteDate"), quoteDates);
-
   function updateFilter(name, value, setValue = () => {}) {
-    setValue(value);
     const next = new URLSearchParams(searchParams.toString());
     if (name === "senderCountry") next.delete("currency");
     if (value === "__all__") next.delete(name);
     else next.set(name, value);
-    setIsLoading(true);
+    if (next.toString() === searchParams.toString()) return;
+    setValue(value);
+    onLoadingChange(true);
     startTransition(() =>
       router.replace(`${pathname}${next.toString() ? `?${next}` : ""}`, {
         scroll: false,
@@ -120,14 +115,15 @@ export default function FilterControls({
 
   function updateProviders(nextProviders) {
     if (!nextProviders.length) return;
-    setProviders(nextProviders);
     const next = new URLSearchParams(searchParams.toString());
     if (nextProviders.length === DEFAULT_SELECTED_PROVIDERS.length) {
       next.delete("providers");
     } else {
       next.set("providers", nextProviders.join(","));
     }
-    setIsLoading(true);
+    if (next.toString() === searchParams.toString()) return;
+    setProviders(nextProviders);
+    onLoadingChange(true);
     startTransition(() =>
       router.replace(`${pathname}${next.toString() ? `?${next}` : ""}`, {
         scroll: false,
@@ -150,7 +146,6 @@ export default function FilterControls({
             View saved quotes by market and amount.
           </p>
         </div>
-        <ViewSwitcher />
       </div>
       <div className="grid grid-cols-1 items-end gap-4 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-4">
         <SelectField
@@ -191,46 +186,20 @@ export default function FilterControls({
             </SelectItem>
           ))}
         </SelectField>
-        {view === "table" &&
-          (quoteDates.length ? (
-            <SelectField
-              label="Quote date"
-              name="quoteDate"
-              value={quoteDate}
-              onValueChange={(value) => updateFilter("quoteDate", value)}
-            >
-              {quoteDates.map((date) => (
-                <SelectItem key={date} value={date}>
-                  {new Date(date).toLocaleString("en-GB", {
-                    timeZone: "UTC",
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}{" "}
-                  UTC
-                </SelectItem>
-              ))}
-            </SelectField>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No saved quote dates available.
-            </p>
+        <SelectField
+          label="Chart range"
+          name="days"
+          value={days}
+          onValueChange={(value) => updateFilter("days", value, setDays)}
+        >
+          {RANGE_OPTIONS.map((value) => (
+            <SelectItem key={value} value={String(value)}>
+              {rangeLabel(value)}
+            </SelectItem>
           ))}
-        {view === "graph" && (
-          <SelectField
-            label="Chart range"
-            name="days"
-            value={days}
-            onValueChange={(value) => updateFilter("days", value, setDays)}
-          >
-            {RANGE_OPTIONS.map((value) => (
-              <SelectItem key={value} value={String(value)}>
-                {rangeLabel(value)}
-              </SelectItem>
-            ))}
-          </SelectField>
-        )}
+        </SelectField>
         <div
-          className="grid min-w-0 gap-2 text-sm font-medium leading-none"
+          className="grid min-w-0 gap-2 text-sm font-medium leading-none xl:col-span-4"
           role="group"
           aria-labelledby="provider-filter-label"
         >

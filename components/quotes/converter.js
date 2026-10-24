@@ -3,9 +3,9 @@ import { SEND_COUNTRIES } from "../../lib/config/send-countries";
 import QuoteNotes from "./quote-notes";
 import MarkupChart from "../charts/markup-chart";
 import QuoteTable from "./quote-table";
-import { ViewPanel } from "./view-tabs";
 import { SENDER_COUNTRIES } from "../../lib/config/sender-countries";
 import { quoteLabel, markupFor, money } from "../../lib/utils/format";
+import QuoteLoadingState from "./quote-loading-state";
 import {
   normalizeSnapshots,
   sortQuotesForDisplay,
@@ -22,13 +22,16 @@ export default function Converter({
   sourceCurrency = "GBP",
   senderCountry = "GB",
   selectedProviders = DEFAULT_SELECTED_PROVIDERS,
+  isLoading = false,
 }) {
   const safeSnapshots = normalizeSnapshots(snapshots);
   const groups = groupSnapshots(safeSnapshots);
 
   return (
     <main className="min-w-0">
-      {!safeSnapshots.length && (
+      {isLoading ? (
+        <QuoteLoadingState />
+      ) : !safeSnapshots.length ? (
         <div
           role="status"
           className="my-6 rounded-xl border border-dashed bg-card p-8 text-center"
@@ -38,21 +41,22 @@ export default function Converter({
             Try another currency, amount or date range.
           </p>
         </div>
+      ) : (
+        <div className="min-w-0">
+          {Object.entries(groups).map(([code, pairs]) => (
+            <CurrencySection
+              key={code}
+              currency={code}
+              pairs={pairs}
+              days={selectedDays}
+              mode={mode}
+              sourceCurrency={sourceCurrency}
+              senderCountry={senderCountry}
+              selectedProviders={selectedProviders}
+            />
+          ))}
+        </div>
       )}
-      <div className="min-w-0">
-        {Object.entries(groups).map(([code, pairs]) => (
-          <CurrencySection
-            key={code}
-            currency={code}
-            pairs={pairs}
-            days={selectedDays}
-            mode={mode}
-            sourceCurrency={sourceCurrency}
-            senderCountry={senderCountry}
-            selectedProviders={selectedProviders}
-          />
-        ))}
-      </div>
       <footer className="mt-8 rounded-xl border bg-card">
         <details>
           <summary className="px-5 py-4 text-sm font-semibold sm:px-6">
@@ -125,26 +129,22 @@ function CurrencySection({
           <time dateTime={lastFetched}>{formatFetchedAt(lastFetched)}</time>
         </div>
       </div>
-      <ViewPanel view="graph">
-        <MarkupChart
-          currency={currency}
-          points={rows}
-          loading={!preparedPairs.length}
-          days={days}
-          sourceCurrency={sourceCurrency}
-          senderCountry={senderCountry}
-          mode={mode}
-        />
-      </ViewPanel>
-      <ViewPanel view="table">
-        <QuoteTable
-          heading={heading}
-          currency={currency}
-          pairs={preparedPairs}
-          sourceCurrency={sourceCurrency}
-          mode={mode}
-        />
-      </ViewPanel>
+      <MarkupChart
+        currency={currency}
+        points={rows}
+        loading={!preparedPairs.length}
+        days={days}
+        sourceCurrency={sourceCurrency}
+        senderCountry={senderCountry}
+        mode={mode}
+      />
+      <QuoteTable
+        heading={heading}
+        currency={currency}
+        pairs={preparedPairs}
+        sourceCurrency={sourceCurrency}
+        mode={mode}
+      />
     </section>
   );
 }

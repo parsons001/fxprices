@@ -1,11 +1,12 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatPct, formatRate, money, trueCost } from "../../lib/utils/format";
 import { resolveQuoteDate } from "../../lib/quotes/quote-filters";
 import { Card, CardContent } from "../ui/card";
 import { Table } from "../ui/table";
+import { SelectField } from "../ui/select-field";
+import { SelectItem } from "../ui/select";
 
 const TABLE_HEADERS = [
   "Budget (GBP)",
@@ -29,7 +30,10 @@ export default function QuoteTable({
   const displayHeaders = TABLE_HEADERS.map((label) =>
     label.replaceAll("GBP", sourceCurrency),
   );
-  const selectedDate = useSearchParams().get("quoteDate");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const selectedDate = searchParams.get("quoteDate");
   const dates = [...new Set(pairs.map(({ pair }) => pair.fetchedAt))]
     .sort()
     .reverse();
@@ -38,19 +42,54 @@ export default function QuoteTable({
     ({ pair }) => pair.fetchedAt === quoteDate,
   );
 
+  function updateQuoteDate(value) {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("quoteDate", value);
+    router.replace(`${pathname}?${next}`, { scroll: false });
+  }
+
   return (
-    <>
+    <section className="mt-4" aria-labelledby={`${heading}-table-heading`}>
       <Card className="overflow-hidden">
-        <div className="border-b px-5 py-4 sm:px-6">
-          <h3 className="text-sm font-semibold">Provider quotes</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {quoteDate
-              ? new Date(quoteDate).toLocaleString("en-GB", {
-                  timeZone: "UTC",
-                }) + " UTC"
-              : "No quote selected"}{" "}
-            · Fees included in the budget
-          </p>
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b px-5 py-4 sm:px-6">
+          <div className="flex flex-col space-y-1.5">
+            <h3 id={`${heading}-table-heading`} className="font-semibold">
+              Provider quotes
+            </h3>
+            <p className="text-sm leading-6 text-muted-foreground">
+              {quoteDate
+                ? new Date(quoteDate).toLocaleString("en-GB", {
+                    timeZone: "UTC",
+                  }) + " UTC"
+                : "No quote selected"}{" "}
+              · Fees included in the budget
+            </p>
+          </div>
+          {dates.length ? (
+            <div className="w-full sm:w-64">
+              <SelectField
+                label="Quote date"
+                name="quoteDate"
+                value={quoteDate}
+                onValueChange={updateQuoteDate}
+              >
+                {dates.map((date) => (
+                  <SelectItem key={date} value={date}>
+                    {new Date(date).toLocaleString("en-GB", {
+                      timeZone: "UTC",
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}{" "}
+                    UTC
+                  </SelectItem>
+                ))}
+              </SelectField>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No saved quote dates available.
+            </p>
+          )}
         </div>
         <CardContent className="p-0">
           <Table>
@@ -92,7 +131,7 @@ export default function QuoteTable({
           )}
         </p>
       </Card>
-    </>
+    </section>
   );
 }
 
