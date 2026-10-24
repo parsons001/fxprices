@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SelectField } from "../ui/select-field";
 import { SelectItem } from "../ui/select";
 import { RANGE_OPTIONS, rangeLabel } from "../../lib/charts/chart-history";
@@ -24,112 +22,20 @@ import {
   useComboboxAnchor,
 } from "../ui/combobox";
 
-function getDefaultCurrency(currencies) {
-  return currencies.includes("EUR")
-    ? "EUR"
-    : currencies.includes("GBP")
-      ? "GBP"
-      : currencies[0];
-}
-
-function getDefaultAmount(amounts) {
-  return String(amounts.includes(1000) ? 1000 : amounts[0]);
-}
-
-function initialValue(searchParams, name, fallback, options) {
-  const value = searchParams.get(name);
-  return value && options.includes(value) ? value : fallback;
-}
-
 export default function FilterControls({
   amounts,
   currencies,
+  amount,
+  currency,
+  days,
   selectedProviders = DEFAULT_SELECTED_PROVIDERS,
   senderCountry = "GB",
   sourceCurrency = "GBP",
-  onLoadingChange = () => {},
+  isPending = false,
+  onFilterChange,
+  onProvidersChange,
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-  const [amount, setAmount] = useState(() =>
-    initialValue(
-      searchParams,
-      "gbpAmount",
-      getDefaultAmount(amounts),
-      amounts.map(String),
-    ),
-  );
-  const [currency, setCurrency] = useState(() =>
-    initialValue(
-      searchParams,
-      "currency",
-      getDefaultCurrency(currencies),
-      currencies,
-    ),
-  );
-  const [days, setDays] = useState(() =>
-    initialValue(searchParams, "days", "30", RANGE_OPTIONS.map(String)),
-  );
-  const [providers, setProviders] = useState(selectedProviders);
   const providerAnchor = useComboboxAnchor();
-
-  useEffect(() => {
-    setAmount(
-      initialValue(
-        searchParams,
-        "gbpAmount",
-        getDefaultAmount(amounts),
-        amounts.map(String),
-      ),
-    );
-    setCurrency(
-      initialValue(
-        searchParams,
-        "currency",
-        getDefaultCurrency(currencies),
-        currencies,
-      ),
-    );
-    setDays(
-      initialValue(searchParams, "days", "30", RANGE_OPTIONS.map(String)),
-    );
-    setProviders(selectedProviders);
-  }, [amounts, currencies, searchParams, selectedProviders]);
-
-  function updateFilter(name, value, setValue = () => {}) {
-    const next = new URLSearchParams(searchParams.toString());
-    if (name === "senderCountry") next.delete("currency");
-    if (value === "__all__") next.delete(name);
-    else next.set(name, value);
-    if (next.toString() === searchParams.toString()) return;
-    setValue(value);
-    onLoadingChange(true);
-    startTransition(() =>
-      router.replace(`${pathname}${next.toString() ? `?${next}` : ""}`, {
-        scroll: false,
-      }),
-    );
-  }
-
-  function updateProviders(nextProviders) {
-    if (!nextProviders.length) return;
-    const next = new URLSearchParams(searchParams.toString());
-    if (nextProviders.length === DEFAULT_SELECTED_PROVIDERS.length) {
-      next.delete("providers");
-    } else {
-      next.set("providers", nextProviders.join(","));
-    }
-    if (next.toString() === searchParams.toString()) return;
-    setProviders(nextProviders);
-    onLoadingChange(true);
-    startTransition(() =>
-      router.replace(`${pathname}${next.toString() ? `?${next}` : ""}`, {
-        scroll: false,
-      }),
-    );
-  }
 
   return (
     <section
@@ -152,7 +58,7 @@ export default function FilterControls({
           label="Profile country"
           name="senderCountry"
           value={senderCountry}
-          onValueChange={(value) => updateFilter("senderCountry", value)}
+          onValueChange={(value) => onFilterChange("senderCountry", value)}
         >
           {Object.entries(SENDER_COUNTRIES).map(([code, config]) => (
             <SelectItem key={code} value={code}>
@@ -163,8 +69,8 @@ export default function FilterControls({
         <SelectField
           label={`${sourceCurrency} amount`}
           name="gbpAmount"
-          value={amount}
-          onValueChange={(value) => updateFilter("gbpAmount", value, setAmount)}
+          value={String(amount)}
+          onValueChange={(value) => onFilterChange("gbpAmount", value)}
         >
           {amounts.map((value) => (
             <SelectItem key={value} value={String(value)}>
@@ -176,9 +82,7 @@ export default function FilterControls({
           label="Target currency"
           name="currency"
           value={currency}
-          onValueChange={(value) =>
-            updateFilter("currency", value, setCurrency)
-          }
+          onValueChange={(value) => onFilterChange("currency", value)}
         >
           {currencies.map((value) => (
             <SelectItem key={value} value={value}>
@@ -189,8 +93,8 @@ export default function FilterControls({
         <SelectField
           label="Chart range"
           name="days"
-          value={days}
-          onValueChange={(value) => updateFilter("days", value, setDays)}
+          value={String(days)}
+          onValueChange={(value) => onFilterChange("days", value)}
         >
           {RANGE_OPTIONS.map((value) => (
             <SelectItem key={value} value={String(value)}>
@@ -208,8 +112,8 @@ export default function FilterControls({
             multiple
             autoHighlight
             items={QUOTE_FILTER_OPTIONS.map(({ value }) => value)}
-            value={providers}
-            onValueChange={updateProviders}
+            value={selectedProviders}
+            onValueChange={onProvidersChange}
           >
             <ComboboxChips ref={providerAnchor}>
               <ComboboxValue>

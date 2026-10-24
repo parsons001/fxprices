@@ -5,6 +5,7 @@ import {
   isQuoteProviderSelected,
   resolveQuoteFilters,
   resolveQuoteDate,
+  resolveSelectedProviders,
 } from "../lib/quotes/quote-filters.js";
 import { attachConversionFees } from "../lib/quotes/additional-fees.js";
 
@@ -70,6 +71,23 @@ test("quote date selection stays nearest to the requested timestamp across filte
     "2026-10-15T12:00:00.000Z",
   );
   assert.equal(resolveQuoteDate(null, quoteDates), quoteDates[0]);
+});
+
+test("provider filter resolution supports plan and provider selections", () => {
+  assert.deepEqual(
+    resolveSelectedProviders({ providers: "Revolut:PLUS,Wise" }),
+    ["Wise", "Revolut:PLUS"],
+  );
+  assert.deepEqual(
+    resolveSelectedProviders({ providers: "Revolut" }),
+    DEFAULT_SELECTED_PROVIDERS.filter((provider) =>
+      provider.startsWith("Revolut:"),
+    ),
+  );
+  assert.deepEqual(
+    resolveSelectedProviders({ providers: "invalid" }),
+    DEFAULT_SELECTED_PROVIDERS,
+  );
 });
 
 test("Send fee enrichment matches the nearest historical conversion and preserves missing comparisons", () => {

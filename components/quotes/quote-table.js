@@ -1,12 +1,13 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { formatPct, formatRate, money, trueCost } from "../../lib/utils/format";
 import { resolveQuoteDate } from "../../lib/quotes/quote-filters";
 import { Card, CardContent } from "../ui/card";
 import { Table } from "../ui/table";
 import { SelectField } from "../ui/select-field";
 import { SelectItem } from "../ui/select";
+import { useBrowserDateFormatter } from "./use-browser-date-formatter";
 
 const TABLE_HEADERS = [
   "Budget (GBP)",
@@ -30,9 +31,9 @@ export default function QuoteTable({
   const displayHeaders = TABLE_HEADERS.map((label) =>
     label.replaceAll("GBP", sourceCurrency),
   );
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const formatDate = useBrowserDateFormatter();
   const selectedDate = searchParams.get("quoteDate");
   const dates = [...new Set(pairs.map(({ pair }) => pair.fetchedAt))]
     .sort()
@@ -45,7 +46,7 @@ export default function QuoteTable({
   function updateQuoteDate(value) {
     const next = new URLSearchParams(searchParams.toString());
     next.set("quoteDate", value);
-    router.replace(`${pathname}?${next}`, { scroll: false });
+    window.history.replaceState(null, "", `${pathname}?${next}`);
   }
 
   return (
@@ -58,9 +59,7 @@ export default function QuoteTable({
             </h3>
             <p className="text-sm leading-6 text-muted-foreground">
               {quoteDate
-                ? new Date(quoteDate).toLocaleString("en-GB", {
-                    timeZone: "UTC",
-                  }) + " UTC"
+                ? formatDate(quoteDate)
                 : "No quote selected"}{" "}
               · Fees included in the budget
             </p>
@@ -75,12 +74,10 @@ export default function QuoteTable({
               >
                 {dates.map((date) => (
                   <SelectItem key={date} value={date}>
-                    {new Date(date).toLocaleString("en-GB", {
-                      timeZone: "UTC",
+                    {formatDate(date, {
                       dateStyle: "medium",
                       timeStyle: "short",
-                    })}{" "}
-                    UTC
+                    })}
                   </SelectItem>
                 ))}
               </SelectField>

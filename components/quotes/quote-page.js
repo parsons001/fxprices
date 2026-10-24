@@ -16,7 +16,6 @@ export default async function QuotePage({
     selectedCurrency,
     selectedAmount,
     selectedDays,
-    selectedProviders,
   } = resolveQuoteFilters(await searchParams);
   let snapshots = [];
   let conversionFeesUnavailable = false;
@@ -53,7 +52,8 @@ export default async function QuotePage({
       currencies={currencies}
       senderCountry={senderCountry}
       sourceCurrency={sourceCurrency}
-      selectedProviders={selectedProviders}
+      selectedCurrency={selectedCurrency}
+      selectedAmount={selectedAmount}
       conversionFeesUnavailable={conversionFeesUnavailable}
       mode={mode}
       snapshots={snapshots}

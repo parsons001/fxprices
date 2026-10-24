@@ -6,6 +6,7 @@ import { formatPct } from "../../lib/utils/format";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { useBrowserDateFormatter } from "../quotes/use-browser-date-formatter";
 
 const COLORS = [
   "#2563eb",
@@ -25,6 +26,7 @@ export default function MarkupChart({
   sourceCurrency = "GBP",
   senderCountry = "GB",
 }) {
+  const formatDate = useBrowserDateFormatter();
   const valid = points.filter((point) => Number.isFinite(point.markup));
   if (!valid.length)
     return (
@@ -52,11 +54,10 @@ export default function MarkupChart({
     .flatMap((row) => series.map((entry) => row[entry.key]))
     .filter(Number.isFinite);
   const dateLabel = (value, tooltip = false) =>
-    new Date(value).toLocaleString("en-GB", {
-      timeZone: "UTC",
+    formatDate(value, {
       month: "short",
       day: "numeric",
-      ...(hourly ? { hour: "2-digit", minute: "2-digit", hour12: false } : {}),
+      ...(hourly ? { hour: "2-digit", minute: "2-digit" } : {}),
       ...(tooltip ? { year: "numeric" } : {}),
     });
   const min = Math.min(0, ...markupValues);
@@ -119,7 +120,7 @@ export default function MarkupChart({
           {hourly
             ? "Hourly points (averaged when multiple quotes fall in the same hour)."
             : "Daily average markup."}{" "}
-          Times are UTC. 0% matches mid-market.
+          Times use your browser locale and time zone. 0% matches mid-market.
         </p>
       </CardHeader>
       <CardContent className="min-w-0 overflow-hidden px-3 pt-6 sm:px-6">
@@ -154,7 +155,7 @@ export default function MarkupChart({
               cursor={{ stroke: "hsl(var(--border))", strokeDasharray: "3 3" }}
               content={
                 <ChartTooltipContent
-                  labelFormatter={(value) => `${dateLabel(value, true)} UTC`}
+                  labelFormatter={(value) => dateLabel(value, true)}
                   formatter={(value) => formatPct(Number(value))}
                 />
               }

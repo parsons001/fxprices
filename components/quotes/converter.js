@@ -6,6 +6,7 @@ import QuoteTable from "./quote-table";
 import { SENDER_COUNTRIES } from "../../lib/config/sender-countries";
 import { quoteLabel, markupFor, money } from "../../lib/utils/format";
 import QuoteLoadingState from "./quote-loading-state";
+import { useBrowserDateFormatter } from "./use-browser-date-formatter";
 import {
   normalizeSnapshots,
   sortQuotesForDisplay,
@@ -24,6 +25,7 @@ export default function Converter({
   selectedProviders = DEFAULT_SELECTED_PROVIDERS,
   isLoading = false,
 }) {
+  const formatDate = useBrowserDateFormatter();
   const safeSnapshots = normalizeSnapshots(snapshots);
   const groups = groupSnapshots(safeSnapshots);
 
@@ -53,6 +55,7 @@ export default function Converter({
               sourceCurrency={sourceCurrency}
               senderCountry={senderCountry}
               selectedProviders={selectedProviders}
+              formatDate={formatDate}
             />
           ))}
         </div>
@@ -96,6 +99,7 @@ function CurrencySection({
   sourceCurrency = "GBP",
   senderCountry = "GB",
   selectedProviders = DEFAULT_SELECTED_PROVIDERS,
+  formatDate,
 }) {
   const preparedPairs = pairs.map((pair) =>
     preparePair(pair, selectedProviders),
@@ -126,7 +130,15 @@ function CurrencySection({
         </div>
         <div className="text-xs leading-5 text-muted-foreground">
           <span className="block font-medium">Latest saved quote</span>
-          <time dateTime={lastFetched}>{formatFetchedAt(lastFetched)}</time>
+          <time dateTime={lastFetched}>
+            {formatDate(lastFetched, {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </time>
         </div>
       </div>
       <MarkupChart
@@ -181,17 +193,4 @@ function preparePair(pair, selectedProviders) {
       };
     });
   return { pair: normalizedPair, rows };
-}
-
-function formatFetchedAt(value) {
-  const formatted = new Date(value).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "UTC",
-  });
-  return `${formatted} UTC`;
 }
