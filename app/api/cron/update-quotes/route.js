@@ -1,15 +1,9 @@
-import { mapConcurrent } from "../../../../lib/utils/map-concurrent.js";
 import {
   summarizeQuoteUpdate,
   serializeUpdateResponse,
 } from "../../../../lib/quotes/quote-update-result.js";
-import {
-  SENDER_COUNTRIES,
-  targetCurrencies,
-} from "../../../../lib/config/sender-countries.js";
-import { updateSend } from "../../../../lib/providers/fetch-send.js";
-import { updateConversion } from "../../../../lib/providers/fetch-conversion.js";
-import { CURRENCIES, AMOUNTS_GBP } from "../../../../lib/config/currencies.js";
+import { getCurrencySettings } from "../../../../lib/config/currencies.js";
+import { runQuoteUpdates } from "../../../../lib/quotes/run-quote-updates.js";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -36,41 +30,28 @@ export async function GET(request) {
       { status: 400 },
     );
   const countries = selectedCountry ? [selectedCountry] : UPDATE_COUNTRIES;
-  const jobs = [
-    ["convert", updateConversion],
-    ["send", updateSend],
-  ].flatMap(([mode, update]) =>
-    countries.flatMap((senderCountry) =>
-      targetCurrencies(CURRENCIES, senderCountry).flatMap((currency) =>
-        AMOUNTS_GBP.map((amount) => async () => {
-          const context = {
-            mode,
-            senderCountry,
-            sourceCurrency: SENDER_COUNTRIES[senderCountry].currency,
-            currency,
-            amount,
-          };
-          try {
-            const result = await update({ amount, currency, senderCountry });
-            return summarizeQuoteUpdate(context, result);
-          } catch (error) {
-            return summarizeQuoteUpdate(context, {
-              error: error?.message ?? "Unexpected update failure",
-            });
-          }
-        }),
-      ),
-    ),
-  );
+  let settings;
+  try {
+    settings = await getCurrencySettings();
+  } catch (error) {
+    console.error("Quote update configuration could not be loaded", error);
+    return Response.json(
+      { success: false, error: "Quote update configuration is unavailable." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
   let results;
   try {
-    results = await mapConcurrent(jobs, 32);
+    results = await runQuoteUpdates(countries, settings);
   } catch {
     return Response.json(
       { success: false, error: "Quote update failed unexpectedly." },
       { status: 500, headers: { "Cache-Control": "no-store" } },
     );
   }
+  results = results.map(({ context, result, error }) =>
+    summarizeQuoteUpdate(context, result ?? { error }),
+  );
   const quotes = { Wise: 0, Revolut: 0 };
   for (const result of results) {
     for (const provider of Object.keys(quotes))

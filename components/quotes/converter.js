@@ -14,7 +14,7 @@ import {
 import {
   DEFAULT_SELECTED_PROVIDERS,
   isQuoteProviderSelected,
-} from "../../lib/quotes/quote-filters";
+} from "../../lib/quotes/provider-filters";
 
 export default function Converter({
   snapshots,
@@ -162,11 +162,10 @@ function CurrencySection({
 }
 
 function groupSnapshots(snapshots) {
-  return Object.fromEntries(
-    [...new Set(snapshots.map((snapshot) => snapshot.currency))]
-      .map((code) => [code, snapshots.filter((pair) => pair.currency === code)])
-      .filter(([, pairs]) => pairs.length),
-  );
+  return snapshots.reduce((groups, snapshot) => {
+    (groups[snapshot.currency] ??= []).push(snapshot);
+    return groups;
+  }, {});
 }
 
 function preparePair(pair, selectedProviders) {

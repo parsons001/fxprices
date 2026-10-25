@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { formatPct, formatRate, money, trueCost } from "../../lib/utils/format";
-import { resolveQuoteDate } from "../../lib/quotes/quote-filters";
+import { resolveQuoteDate } from "../../lib/quotes/date-filters";
 import { Card, CardContent } from "../ui/card";
 import { Table } from "../ui/table";
 import { SelectField } from "../ui/select-field";
@@ -58,10 +58,8 @@ export default function QuoteTable({
               Provider quotes
             </h3>
             <p className="text-sm leading-6 text-muted-foreground">
-              {quoteDate
-                ? formatDate(quoteDate)
-                : "No quote selected"}{" "}
-              · Fees included in the budget
+              {quoteDate ? formatDate(quoteDate) : "No quote selected"} · Fees
+              included in the budget
             </p>
           </div>
           {dates.length ? (

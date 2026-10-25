@@ -4,3 +4,4 @@ data/
 .next/
 out/
 .env*.local
+.vercel

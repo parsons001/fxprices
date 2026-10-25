@@ -6,7 +6,22 @@ import {
 } from "../lib/quotes/snapshot.js";
 import { money } from "../lib/utils/format.js";
 import { conversionStore } from "../lib/db/conversion-store.js";
-import { GET } from "../app/api/convert/route.js";
+import { createSavedQuotesHandler } from "../lib/api/saved-quotes-handler.js";
+import { getTestCurrencySettings } from "./currency-settings-fixture.js";
+
+const GET = createSavedQuotesHandler(conversionStore, getTestCurrencySettings);
+
+test("Saved quote API returns service unavailable when settings fail", async () => {
+  const handler = createSavedQuotesHandler(conversionStore, async () => {
+    throw new Error("Private Global Config detail");
+  });
+  const response = await handler(new Request("http://localhost/api/convert"));
+  assert.equal(response.status, 503);
+  assert.equal(
+    (await response.json()).error,
+    "Quote configuration is unavailable.",
+  );
+});
 
 test("Public route only reads saved snapshots and filters them", async (t) => {
   t.mock.method(globalThis, "fetch", () => {

@@ -4,6 +4,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createFxMcpServer } from "../lib/mcp/server.js";
 import { handleMcpRequest } from "../lib/mcp/http-handler.js";
+import { getTestCurrencySettings } from "./currency-settings-fixture.js";
 
 function fakeDatabase(collections) {
   const calls = [];
@@ -77,7 +78,7 @@ test("MCP snapshot tool pages both read-only quote collections", async () => {
     send_snapshots: [snapshot],
   });
   const result = await invokeTool(
-    createFxMcpServer(async () => db),
+    createFxMcpServer(async () => db, getTestCurrencySettings),
     "list_quote_snapshots",
     { currency: "EUR", amount: 500, page: 2, pageSize: 1 },
   );
@@ -115,7 +116,7 @@ test("MCP overview exposes collection and market counts", async () => {
     send_snapshots: [],
   });
   const result = await invokeTool(
-    createFxMcpServer(async () => db),
+    createFxMcpServer(async () => db, getTestCurrencySettings),
     "get_quote_database_overview",
     {},
   );

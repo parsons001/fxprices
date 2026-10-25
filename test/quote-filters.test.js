@@ -7,20 +7,35 @@ import {
   resolveQuoteDate,
   resolveSelectedProviders,
 } from "../lib/quotes/quote-filters.js";
+import { parseCurrencyPairs } from "../lib/config/currency-pairs.js";
 import { attachConversionFees } from "../lib/quotes/additional-fees.js";
 
 test("shared page filters preserve country defaults and reject invalid selections", () => {
-  const uk = resolveQuoteFilters();
+  const settings = {
+    amounts: [100, 500, 1000, 5000, 10000],
+    currencyPairs: parseCurrencyPairs([
+      "GBP:AED",
+      "GBP:EUR",
+      "GBP:USD",
+      "EUR:GBP",
+      "EUR:AED",
+      "EUR:USD",
+    ]),
+  };
+  const uk = resolveQuoteFilters({}, settings);
   assert.equal(uk.selectedCurrency, "EUR");
   assert.equal(uk.sourceCurrency, "GBP");
   assert.deepEqual(uk.selectedProviders, DEFAULT_SELECTED_PROVIDERS);
-  const ireland = resolveQuoteFilters({
-    senderCountry: "IE",
-    currency: "usd",
-    gbpAmount: "500",
-    days: "7",
-    providers: "Revolut",
-  });
+  const ireland = resolveQuoteFilters(
+    {
+      senderCountry: "IE",
+      currency: "usd",
+      gbpAmount: "500",
+      days: "7",
+      providers: "Revolut",
+    },
+    settings,
+  );
   assert.equal(ireland.sourceCurrency, "EUR");
   assert.equal(ireland.selectedCurrency, "USD");
   assert.equal(ireland.selectedAmount, "500");
@@ -28,13 +43,26 @@ test("shared page filters preserve country defaults and reject invalid selection
   assert.equal(ireland.selectedProviders[0], "Revolut:STANDARD");
   assert.equal(ireland.selectedProviders.length, 5);
   assert.deepEqual(
-    resolveQuoteFilters({ providers: "invalid" }).selectedProviders,
+    resolveQuoteFilters({ providers: "invalid" }, settings).selectedProviders,
     DEFAULT_SELECTED_PROVIDERS,
   );
   assert.deepEqual(
-    resolveQuoteFilters({ providers: "Revolut:PLUS" }).selectedProviders,
+    resolveQuoteFilters({ providers: "Revolut:PLUS" }, settings)
+      .selectedProviders,
     ["Revolut:PLUS"],
   );
+  const independentCurrency = resolveQuoteFilters(
+    {
+      senderCountry: "GB",
+      sourceCurrency: "EUR",
+      currency: "GBP",
+    },
+    settings,
+  );
+  assert.equal(independentCurrency.senderCountry, "GB");
+  assert.equal(independentCurrency.sourceCurrency, "EUR");
+  assert.equal(independentCurrency.selectedCurrency, "GBP");
+  assert.ok(independentCurrency.currencies.includes("GBP"));
   assert.equal(
     isQuoteProviderSelected({ provider: "Revolut", planId: "PLUS" }, [
       "Revolut:PLUS",
@@ -47,12 +75,15 @@ test("shared page filters preserve country defaults and reject invalid selection
     ]),
     false,
   );
-  const invalid = resolveQuoteFilters({
-    senderCountry: "ES",
-    currency: "INVALID",
-    gbpAmount: "-1",
-    days: "999",
-  });
+  const invalid = resolveQuoteFilters(
+    {
+      senderCountry: "ES",
+      currency: "INVALID",
+      gbpAmount: "-1",
+      days: "999",
+    },
+    settings,
+  );
   assert.deepEqual(invalid, uk);
 });
 

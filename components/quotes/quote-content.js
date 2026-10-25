@@ -1,19 +1,20 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import FilterControls from "./filter-controls";
 import Converter from "./converter";
 import {
   DEFAULT_SELECTED_PROVIDERS,
   resolveSelectedProviders,
-} from "../../lib/quotes/quote-filters";
+} from "../../lib/quotes/provider-filters";
 
 export default function QuoteContent({
   amounts,
   currencies,
   senderCountry,
   sourceCurrency,
+  sourceCurrencies,
   selectedCurrency,
   selectedAmount,
   conversionFeesUnavailable,
@@ -25,13 +26,22 @@ export default function QuoteContent({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [amountSourceCurrency, setAmountSourceCurrency] =
+    useState(sourceCurrency);
   const currentProviders = resolveSelectedProviders({
     providers: searchParams.getAll("providers"),
   });
 
+  useEffect(() => {
+    setAmountSourceCurrency(sourceCurrency);
+  }, [sourceCurrency]);
+
   function updateFilter(name, value) {
     const next = new URLSearchParams(searchParams.toString());
-    if (name === "senderCountry") next.delete("currency");
+    if (name === "sourceCurrency") {
+      setAmountSourceCurrency(value);
+      next.delete("currency");
+    }
     if (value === "__all__") next.delete(name);
     else next.set(name, value);
     if (next.toString() === searchParams.toString()) return;
@@ -67,7 +77,8 @@ export default function QuoteContent({
         currency={selectedCurrency}
         days={selectedDays}
         senderCountry={senderCountry}
-        sourceCurrency={sourceCurrency}
+        sourceCurrency={amountSourceCurrency}
+        sourceCurrencies={sourceCurrencies}
         selectedProviders={currentProviders}
         isPending={isPending}
         onFilterChange={updateFilter}

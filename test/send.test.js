@@ -7,6 +7,7 @@ import {
 } from "../lib/providers/fetch-send.js";
 import { sendStore } from "../lib/db/send-store.js";
 import { conversionDocument } from "../lib/db/conversion-store.js";
+import { getTestCurrencySettings } from "./currency-settings-fixture.js";
 
 const wise = [
   {
@@ -69,14 +70,63 @@ test("Send uses separate storage, country routing, amount units and provider err
   });
   const request = () =>
     new Request("http://localhost/api/send?currency=EUR&gbpAmount=100");
-  const result = await (await fetchAndStoreSend(request())).json();
+  const result = await (
+    await fetchAndStoreSend(request(), getTestCurrencySettings)
+  ).json();
   assert.equal(result.quotes.length, 2);
   assert.equal(result.storage.saved, true);
   assert.equal(saved[0].recipientCountry, "ES");
   t.mock.method(globalThis, "fetch", async () =>
     Response.json({}, { status: 503 }),
   );
-  const failed = await (await fetchAndStoreSend(request())).json();
+  const failed = await (
+    await fetchAndStoreSend(request(), getTestCurrencySettings)
+  ).json();
   assert.equal(failed.errors.length, 2);
   assert.equal(failed.storage.saved, true);
+});
+
+test("Send quote ingestion returns service unavailable when settings fail", async () => {
+  const response = await fetchAndStoreSend(
+    new Request("http://localhost/api/send"),
+    async () => {
+      throw new Error("Private Global Config detail");
+    },
+  );
+  assert.equal(response.status, 503);
+  assert.equal(
+    (await response.json()).error,
+    "Quote configuration is unavailable.",
+  );
+});
+
+test("Send ingestion defaults to an amount from Global Config", async (t) => {
+  t.mock.method(sendStore, "save", async () => "send-id");
+  t.mock.method(globalThis, "fetch", async (url) => {
+    const parsed = new URL(url);
+    if (parsed.hostname === "wise.com") {
+      assert.equal(parsed.searchParams.get("sourceAmount"), "250");
+      return Response.json([
+        {
+          payInMethod: "BALANCE",
+          payOutMethod: "BANK_TRANSFER",
+          sourceCcy: "GBP",
+          targetCcy: "EUR",
+          midRate: 1.2,
+          total: 0,
+          sourceAmount: 250,
+          targetAmount: 300,
+        },
+      ]);
+    }
+    return Response.json({}, { status: 503 });
+  });
+  const settings = await getTestCurrencySettings();
+  const response = await fetchAndStoreSend(
+    new Request("http://localhost/api/send?currency=EUR"),
+    async () => ({ ...settings, amounts: [250, 500] }),
+  );
+  const result = await response.json();
+  assert.equal(result.amount, 250);
+  assert.equal(result.quotes[0].provider, "Wise");
 });

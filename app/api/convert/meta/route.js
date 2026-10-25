@@ -1,1 +1,3 @@
-export { quoteMetadata as GET } from "../../../../lib/api/quote-metadata.js";
+import { quoteMetadata } from "../../../../lib/api/quote-metadata.js";
+
+export const GET = (request) => quoteMetadata(request);

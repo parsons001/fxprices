@@ -8,7 +8,7 @@ import { money } from "../../lib/utils/format";
 import {
   DEFAULT_SELECTED_PROVIDERS,
   QUOTE_FILTER_OPTIONS,
-} from "../../lib/quotes/quote-filters";
+} from "../../lib/quotes/provider-filters";
 import {
   Combobox,
   ComboboxChip,
@@ -31,6 +31,7 @@ export default function FilterControls({
   selectedProviders = DEFAULT_SELECTED_PROVIDERS,
   senderCountry = "GB",
   sourceCurrency = "GBP",
+  sourceCurrencies = [],
   isPending = false,
   onFilterChange,
   onProvidersChange,
@@ -67,14 +68,14 @@ export default function FilterControls({
           ))}
         </SelectField>
         <SelectField
-          label={`${sourceCurrency} amount`}
-          name="gbpAmount"
-          value={String(amount)}
-          onValueChange={(value) => onFilterChange("gbpAmount", value)}
+          label="Source currency"
+          name="sourceCurrency"
+          value={sourceCurrency}
+          onValueChange={(value) => onFilterChange("sourceCurrency", value)}
         >
-          {amounts.map((value) => (
-            <SelectItem key={value} value={String(value)}>
-              {money(value, sourceCurrency)}
+          {sourceCurrencies.map((value) => (
+            <SelectItem key={value} value={value}>
+              {value}
             </SelectItem>
           ))}
         </SelectField>
@@ -91,6 +92,18 @@ export default function FilterControls({
           ))}
         </SelectField>
         <SelectField
+          label="Amount"
+          name="gbpAmount"
+          value={String(amount)}
+          onValueChange={(value) => onFilterChange("gbpAmount", value)}
+        >
+          {amounts.map((value) => (
+            <SelectItem key={value} value={String(value)}>
+              {money(value, sourceCurrency)}
+            </SelectItem>
+          ))}
+        </SelectField>
+        <SelectField
           label="Chart range"
           name="days"
           value={String(days)}
@@ -103,7 +116,7 @@ export default function FilterControls({
           ))}
         </SelectField>
         <div
-          className="grid min-w-0 gap-2 text-sm font-medium leading-none xl:col-span-4"
+          className="grid min-w-0 gap-2 text-sm font-medium leading-none xl:col-span-3"
           role="group"
           aria-labelledby="provider-filter-label"
         >
