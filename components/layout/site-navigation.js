@@ -17,6 +17,7 @@ export default function SiteNavigation() {
       <div className="flex h-16 items-center border-b px-5">
         <Link
           href={`/convert?senderCountry=${country}`}
+          prefetch={false}
           className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4"
         >
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -41,6 +42,7 @@ export default function SiteNavigation() {
               <Link
                 key={href}
                 href={`${href}?senderCountry=${country}`}
+                prefetch={false}
                 aria-current={active ? "page" : undefined}
                 className={`flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${active ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}
               >
