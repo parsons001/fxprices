@@ -1,7 +1,4 @@
-import {
-  parseCurrencyPairs,
-  sourceCurrenciesForPairs,
-} from "../lib/config/currency-pairs.js";
+import { parseCurrencyPairs } from "../lib/config/currency-pairs.js";
 
 const currencyPairs = parseCurrencyPairs([
   "GBP:AED",
@@ -37,7 +34,6 @@ const currencyPairs = parseCurrencyPairs([
 export async function getTestCurrencySettings() {
   return {
     amounts: [100, 500, 1000, 5000, 10000],
-    currencyPairs,
-    sourceCurrencies: sourceCurrenciesForPairs(currencyPairs),
+    currencyPairs: { GB: currencyPairs, IE: currencyPairs },
   };
 }

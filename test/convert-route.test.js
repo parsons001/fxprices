@@ -26,6 +26,20 @@ test("Conversion metadata and validation remain compatible", async () => {
   assert.equal(euroSourceMeta.sourceCurrency, "EUR");
   assert.ok(euroSourceMeta.currencies.includes("GBP"));
   assert.ok(euroSourceMeta.sourceCurrencies.includes("GBP"));
+  const profileSpecificMeta = await (
+    await quoteMetadata(
+      new Request("http://localhost/api/convert/meta?senderCountry=IE"),
+      async () => ({
+        amounts: [100],
+        currencyPairs: {
+          GB: [{ sourceCurrency: "GBP", currency: "USD" }],
+          IE: [{ sourceCurrency: "EUR", currency: "EUR" }],
+        },
+      }),
+    )
+  ).json();
+  assert.deepEqual(profileSpecificMeta.sourceCurrencies, ["EUR"]);
+  assert.deepEqual(profileSpecificMeta.currencies, ["EUR"]);
   const response = await fetchAndStoreConversion(
     new Request("http://localhost/api/convert?currency=INVALID"),
     getTestCurrencySettings,

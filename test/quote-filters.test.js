@@ -13,14 +13,17 @@ import { attachConversionFees } from "../lib/quotes/additional-fees.js";
 test("shared page filters preserve country defaults and reject invalid selections", () => {
   const settings = {
     amounts: [100, 500, 1000, 5000, 10000],
-    currencyPairs: parseCurrencyPairs([
-      "GBP:AED",
-      "GBP:EUR",
-      "GBP:USD",
-      "EUR:GBP",
-      "EUR:AED",
-      "EUR:USD",
-    ]),
+    currencyPairs: {
+      GB: parseCurrencyPairs([
+        "GBP:AED",
+        "GBP:EUR",
+        "GBP:USD",
+        "EUR:GBP",
+        "EUR:AED",
+        "EUR:USD",
+      ]),
+      IE: parseCurrencyPairs(["EUR:GBP", "EUR:AED", "EUR:USD"]),
+    },
   };
   const uk = resolveQuoteFilters({}, settings);
   assert.equal(uk.selectedCurrency, "EUR");
@@ -38,6 +41,7 @@ test("shared page filters preserve country defaults and reject invalid selection
   );
   assert.equal(ireland.sourceCurrency, "EUR");
   assert.equal(ireland.selectedCurrency, "USD");
+  assert.deepEqual(ireland.sourceCurrencies, ["EUR"]);
   assert.equal(ireland.selectedAmount, "500");
   assert.equal(ireland.selectedDays, 7);
   assert.equal(ireland.selectedProviders[0], "Revolut:STANDARD");

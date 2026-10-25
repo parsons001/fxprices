@@ -86,7 +86,10 @@ test("Live quote endpoint returns both quote types without saving them", async (
     }),
     async () => ({
       amounts: [100],
-      currencyPairs: [{ sourceCurrency: "GBP", currency: "EUR" }],
+      currencyPairs: {
+        GB: [{ sourceCurrency: "GBP", currency: "EUR" }],
+        IE: [{ sourceCurrency: "GBP", currency: "EUR" }],
+      },
     }),
   );
   const body = await response.json();
