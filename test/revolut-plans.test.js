@@ -117,3 +117,43 @@ test("EUR paid-plan estimates apply the €3,000 allowance and weekend fee", () 
   );
   assert.ok(plans.slice(1).every((plan) => plan.feeGbp === 0));
 });
+
+test("Same-currency Revolut estimates and live quotes do not apply FX fees", () => {
+  const plans = estimatePaidPlans({
+    sourceCurrency: "GBP",
+    targetCurrency: "GBP",
+    amountGbp: 5000,
+    rate: 1,
+    weekend: true,
+  });
+  assert.ok(
+    plans.every(
+      (plan) =>
+        plan.feeGbp === 0 &&
+        plan.fairUsageFeeGbp === 0 &&
+        plan.weekendFeeGbp === 0 &&
+        plan.receivedAmount === 5000,
+    ),
+  );
+
+  const live = liveRevolutQuote(
+    {
+      rate: { rate: 1 },
+      recipient: { currency: "AED", amount: 500000 },
+    },
+    {
+      id: "STANDARD",
+      name: "Standard",
+      fees: {
+        total: { currency: "AED", amount: 100 },
+        cost: { currency: "AED", amount: 500100 },
+      },
+    },
+    "AED",
+    5000,
+    2,
+    "AED",
+  );
+  assert.equal(live.feeGbp, 0);
+  assert.equal(live.receivedAmount, 5000);
+});

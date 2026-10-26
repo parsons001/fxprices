@@ -50,6 +50,37 @@ test("Send selects balance-to-bank and bank route, deducting quoted fees once", 
   );
   assert.throws(() => revolutSendQuotes(revolut, "JPY", 100));
 });
+test("Same-currency Revolut bank transfer excludes FX fees but keeps transfer fees", () => {
+  const quote = revolutSendQuotes(
+    {
+      rate: { from: "AED", to: "AED", rate: 1 },
+      routes: [
+        {
+          id: "BANK",
+          plans: [
+            {
+              id: "STANDARD",
+              name: "Standard",
+              fees: {
+                currency: "AED",
+                total: 150,
+                transfer: 50,
+                fx: 100,
+              },
+            },
+          ],
+        },
+      ],
+    },
+    "AED",
+    100,
+    "AED",
+  )[0];
+  assert.equal(quote.feeGbp, 0.5);
+  assert.equal(quote.receivedAmount, 99.5);
+  assert.equal(quote.transferFeeGbp, 0.5);
+  assert.equal(quote.exchangeFeeGbp, 0);
+});
 test("Send uses separate storage, country routing, amount units and provider errors", async (t) => {
   const saved = [];
   t.mock.method(sendStore, "save", async (result) => {
