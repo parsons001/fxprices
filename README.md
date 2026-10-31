@@ -15,6 +15,19 @@ npm run dev
 
 For production, run `npm run build` followed by `npm start`. Configure the same environment variables on your deployment; do not expose `GLOBAL_CONFIG` to client-side code.
 
+## Authentication
+
+The website requires a verified account to access Convert, Send and Profile. Users can register with email/password or Google. Email verification and password-reset links are sent through the configured SMTP server. Authentication data is stored in MongoDB using Better Auth.
+
+Configure these server-only variables in `.env.local` and in the deployment environment:
+
+- `BETTER_AUTH_SECRET`: random secret of at least 32 characters.
+- `BETTER_AUTH_URL`: canonical site origin, such as `https://fx.example.com`.
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: Google OAuth credentials. Add `${BETTER_AUTH_URL}/api/auth/callback/google` as an authorized redirect URI in Google Cloud.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD` and `SMTP_FROM`: SMTP connection and sender settings. Use port `587` with `SMTP_SECURE=false` for STARTTLS, or port `465` with `SMTP_SECURE=true` for implicit TLS.
+
+The Better Auth handler is mounted at `/api/auth/[...all]`. Website pages are protected; existing data, metadata, MCP and quote API endpoints remain public for now. Quote-update endpoints continue to require their existing cron secret.
+
 ## Saved results
 
 The app reads `fxprices_app.conversion_snapshots`, selecting the newest `fetchedAt` for each currency/amount pair, with document ID as a tie-breaker. Every page load reads MongoDB afresh. Filters operate locally on those saved results. Saved timestamps, provider errors, empty states and database failures are displayed; there is no live-quote fallback.

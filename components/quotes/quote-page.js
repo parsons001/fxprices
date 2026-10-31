@@ -3,12 +3,23 @@ import { resolveQuoteFilters } from "../../lib/quotes/quote-filters.js";
 import { conversionStore } from "../../lib/db/conversion-store.js";
 import { sendStore } from "../../lib/db/send-store.js";
 import { getCurrencySettings } from "../../lib/config/currencies.js";
+import { requireSignedInUser } from "../../lib/auth-session.js";
 import QuoteContent from "./quote-content";
 
 export default async function QuotePage({
   searchParams = {},
   mode = "convert",
 }) {
+  const params = await searchParams;
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (Array.isArray(value))
+      value.forEach((entry) => query.append(key, entry));
+    else if (value !== undefined) query.set(key, value);
+  }
+  await requireSignedInUser(
+    `/${mode}${query.size ? `?${query.toString()}` : ""}`,
+  );
   const settings = await getCurrencySettings();
   const {
     senderCountry,
@@ -18,7 +29,7 @@ export default async function QuotePage({
     selectedCurrency,
     selectedAmount,
     selectedDays,
-  } = resolveQuoteFilters(await searchParams, settings);
+  } = resolveQuoteFilters(params, settings);
   let snapshots = [];
   let conversionFeesUnavailable = false;
   const store = mode === "send" ? sendStore : conversionStore;
