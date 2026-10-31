@@ -118,50 +118,63 @@ test("Route preserves fixed-budget calculations and partial provider failures", 
           sourceCcy: "GBP",
           targetCcy: "EUR",
           midRate: 1.2,
-          targetAmount: 118.8,
+          targetAmount: 60000,
           total: 1,
-          sourceAmount: 100,
+          sourceAmount: 50000,
         },
       ]);
     }
     return Response.json({
-      rate: { rate: 1.2, weekend: false },
-      recipient: { currency: "EUR", amount: 12000 },
+      rate: { rate: 1.2, weekend: true },
+      recipient: { currency: "EUR", amount: 6000000 },
       plans: [
         {
           id: "STANDARD",
           name: "Standard",
           fees: {
-            total: { currency: "GBP", amount: 100 },
-            cost: { currency: "GBP", amount: 10100 },
+            fx: { amount: 12300, currency: "GBP" },
+            fxWeekend: {
+              amount: {
+                amount: { amount: 11200, currency: "GBP" },
+                percentage: "1%",
+              },
+            },
+            total: { currency: "GBP", amount: 23500 },
+            cost: { currency: "GBP", amount: 5023500 },
           },
         },
       ],
     });
   });
   const request = () =>
-    new Request("http://localhost/api/convert?gbpAmount=100&currency=EUR");
+    new Request("http://localhost/api/convert?gbpAmount=50000&currency=EUR");
+  const settings = await getTestCurrencySettings();
+  const settingsProvider = async () => ({ ...settings, amounts: [50000] });
   const data = await (
-    await fetchAndStoreConversion(request(), getTestCurrencySettings)
+    await fetchAndStoreConversion(request(), settingsProvider)
   ).json();
   const standard = data.quotes.find((quote) => quote.planId === "STANDARD");
-  assert.equal(standard.costGbp, 100);
-  assert.equal(standard.receivedAmount, 118.8);
-  assert.equal(standard.feeGbp, 1);
-  assert.equal(formatPct(markupFor(standard, 1.2)), "-1.0000%");
-  assert.equal(trueCost(1, 100), 1);
-  assert.equal(trueCost(-1, 100), 1);
+  assert.equal(standard.costGbp, 50000);
+  assert.equal(standard.receivedAmount, 59718);
+  assert.equal(standard.feeGbp, 235);
+  assert.equal(standard.fairUsageFeeGbp, 123);
+  assert.equal(standard.weekendFeeGbp, 112);
+  assert.equal(standard.weekend, true);
+  assert.equal(standard.usedAllowanceGbp, null);
+  assert.equal(formatPct(markupFor(standard, 1.2)), "-0.4700%");
+  assert.equal(trueCost(1, 50000), 500);
+  assert.equal(trueCost(-1, 50000), 500);
   assert.equal(trueCost(null, 100), null);
   assert.equal(data.quotes.length, 6);
   assert.equal(data.storage.saved, true);
   assert.equal(
     saved[0].quotes.find((q) => q.planId === "STANDARD").markupPct.toFixed(2),
-    "-1.00",
+    "-0.47",
   );
   assert.ok(saved[0].fetchedAt instanceof Date);
   wiseUnavailable = true;
   const partial = await (
-    await fetchAndStoreConversion(request(), getTestCurrencySettings)
+    await fetchAndStoreConversion(request(), settingsProvider)
   ).json();
   assert.equal(partial.quotes.length, 5);
   assert.equal(saved[1].midMarketRate, null);
@@ -170,7 +183,7 @@ test("Route preserves fixed-budget calculations and partial provider failures", 
     throw new Error("private connection details");
   });
   const unsaved = await (
-    await fetchAndStoreConversion(request(), getTestCurrencySettings)
+    await fetchAndStoreConversion(request(), settingsProvider)
   ).json();
   assert.equal(unsaved.storage.saved, false);
   assert.equal(unsaved.quotes.length, 5);

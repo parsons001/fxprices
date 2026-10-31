@@ -145,6 +145,13 @@ test("Same-currency Revolut estimates and live quotes do not apply FX fees", () 
       id: "STANDARD",
       name: "Standard",
       fees: {
+        fx: { amount: 100, currency: "AED" },
+        fxWeekend: {
+          amount: {
+            amount: { amount: 100, currency: "AED" },
+            percentage: "1%",
+          },
+        },
         total: { currency: "AED", amount: 100 },
         cost: { currency: "AED", amount: 500100 },
       },
@@ -155,5 +162,8 @@ test("Same-currency Revolut estimates and live quotes do not apply FX fees", () 
     "AED",
   );
   assert.equal(live.feeGbp, 0);
+  assert.equal(live.fairUsageFeeGbp, 0);
+  assert.equal(live.weekendFeeGbp, 0);
+  assert.equal(live.weekend, false);
   assert.equal(live.receivedAmount, 5000);
 });
