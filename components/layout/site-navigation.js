@@ -1,12 +1,7 @@
 "use client";
 import Link from "next/link";
-import {
-  ArrowLeftRight,
-  Send,
-  ChartNoAxesCombined,
-  Database,
-  ChevronRight,
-} from "lucide-react";
+import { ArrowLeftRight, Send, Database, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 
 export default function SiteNavigation() {
@@ -21,7 +16,13 @@ export default function SiteNavigation() {
           className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4"
         >
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <ChartNoAxesCombined className="size-4" aria-hidden="true" />
+            <Image
+              src="/hat-glasses.svg"
+              width={24}
+              height={24}
+              alt=""
+              aria-hidden="true"
+            />
           </span>
           <span className="text-sm font-semibold tracking-tight">
             FX Compare
