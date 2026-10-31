@@ -24,6 +24,7 @@ export default function Converter({
   senderCountry = "GB",
   selectedProviders = DEFAULT_SELECTED_PROVIDERS,
   isLoading = false,
+  emptyMessage = "No saved quotes",
 }) {
   const formatDate = useBrowserDateFormatter();
   const safeSnapshots = normalizeSnapshots(snapshots);
@@ -38,7 +39,7 @@ export default function Converter({
           role="status"
           className="my-6 rounded-xl border border-dashed bg-card p-8 text-center"
         >
-          <h2 className="font-semibold">No saved quotes</h2>
+          <h2 className="font-semibold">{emptyMessage}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Try another currency, amount or date range.
           </p>

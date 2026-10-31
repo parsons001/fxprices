@@ -143,7 +143,7 @@ function PairRows({ rows, pair, currency, isSend, sourceCurrency }) {
       )}
       {rows.map((row, index) => (
         <tr key={index}>
-          <td>{money(row.costGbp, sourceCurrency)}</td>
+          <td>{money(row.sourceAmount, sourceCurrency)}</td>
           <td>{row.label}</td>
           <td>{money(row.receivedAmount, currency)}</td>
           <td>{formatRate(row.rate)}</td>
@@ -167,7 +167,9 @@ function PairRows({ rows, pair, currency, isSend, sourceCurrency }) {
           <td className={getMarkupClass(row.markup)}>
             {formatPct(row.markup)}
           </td>
-          <td>{money(trueCost(row.markup, row.costGbp), sourceCurrency)}</td>
+          <td>
+            {money(trueCost(row.markup, row.sourceAmount), sourceCurrency)}
+          </td>
         </tr>
       ))}
       {pair.errors.map((error, index) => (

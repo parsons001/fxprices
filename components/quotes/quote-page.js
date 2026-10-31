@@ -57,6 +57,7 @@ export default async function QuotePage({
       senderCountry={senderCountry}
       sourceCurrency={sourceCurrency}
       sourceCurrencies={sourceCurrencies}
+      currencyPairsByCountry={settings.currencyPairs}
       selectedCurrency={selectedCurrency}
       selectedAmount={selectedAmount}
       conversionFeesUnavailable={conversionFeesUnavailable}

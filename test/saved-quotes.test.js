@@ -51,6 +51,37 @@ test("Public route only reads saved snapshots and filters them", async (t) => {
   assert.ok(!(await failed.text()).includes("Private details"));
 });
 
+test("Saved quote API can return the selected range of history", async (t) => {
+  let historyOptions;
+  t.mock.method(conversionStore, "history", async (options) => {
+    historyOptions = options;
+    return [{ currency: "EUR", amount: 500 }];
+  });
+  const response = await GET(
+    new Request(
+      "http://localhost/api/convert?currency=EUR&gbpAmount=500&days=7&senderCountry=GB&sourceCurrency=GBP",
+    ),
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(historyOptions, {
+    senderCountry: "GB",
+    sourceCurrency: "GBP",
+    days: 7,
+    currency: "EUR",
+    amount: 500,
+  });
+  assert.deepEqual((await response.json()).snapshots, [
+    { currency: "EUR", amount: 500 },
+  ]);
+});
+
+test("Saved quote API rejects unsupported history ranges", async () => {
+  const response = await GET(
+    new Request("http://localhost/api/convert?currency=EUR&days=2"),
+  );
+  assert.equal(response.status, 400);
+});
+
 test("Saved snapshots are normalized for incomplete data", () => {
   const normalized = normalizeSnapshots([
     {

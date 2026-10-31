@@ -154,7 +154,7 @@ test("Route preserves fixed-budget calculations and partial provider failures", 
     await fetchAndStoreConversion(request(), settingsProvider)
   ).json();
   const standard = data.quotes.find((quote) => quote.planId === "STANDARD");
-  assert.equal(standard.costGbp, 50000);
+  assert.equal(standard.sourceAmount, 50000);
   assert.equal(standard.receivedAmount, 59718);
   assert.equal(standard.feeGbp, 235);
   assert.equal(standard.fairUsageFeeGbp, 123);

@@ -33,7 +33,7 @@ test("Prior usage reduces the remaining allowance without charging past usage ag
 });
 test("Fees reduce the amount converted while total budget and rate remain fixed", () => {
   const plus = quote(5000, true)[0];
-  assert.equal(plus.costGbp, 5000);
+  assert.equal(plus.sourceAmount, 5000);
   assert.equal(plus.receivedAmount, 5759.4);
   assert.equal(plus.rate, 1.16);
   assert.equal(plus.estimated, true);
@@ -46,21 +46,22 @@ test("Premium, Metal and Ultra have no additional conversion fees even on weeken
   );
   for (const p of plans) {
     assert.equal(p.feeGbp, 0);
-    assert.equal(p.costGbp, 10000);
+    assert.equal(p.sourceAmount, 10000);
   }
 });
 
 test("Standard fee normalization and zero-decimal currencies keep a fixed budget", () => {
   assert.deepEqual(fixedBudgetQuote(100, 1, 1.16), {
-    costGbp: 100,
+    sourceAmount: 100,
     receivedAmount: 114.84,
   });
   assert.deepEqual(fixedBudgetQuote(100, 1, 195.123, 0), {
-    costGbp: 100,
+    sourceAmount: 100,
     receivedAmount: 19317,
   });
   for (const amount of [100, 500, 1000, 5000, 10000]) {
-    for (const plan of quote(amount, true)) assert.equal(plan.costGbp, amount);
+    for (const plan of quote(amount, true))
+      assert.equal(plan.sourceAmount, amount);
   }
 });
 
@@ -79,7 +80,7 @@ test("Live fees are deducted from the sending budget before conversion", () => {
   };
   const result = liveRevolutQuote(quote, plan, "EUR", 100);
   assert.equal(result.receivedAmount, 114.84);
-  assert.equal(result.costGbp, 100);
+  assert.equal(result.sourceAmount, 100);
   assert.equal(result.feeGbp, 1);
   assert.equal(result.estimated, false);
   assert.equal(

@@ -42,7 +42,7 @@ test("Send selects balance-to-bank and bank route, deducting quoted fees once", 
   const q = revolutSendQuotes(revolut, "EUR", 100)[0];
   assert.equal(q.receivedAmount, 118.8);
   assert.equal(q.feeGbp, 1);
-  assert.equal(q.costGbp, 100);
+  assert.equal(q.sourceAmount, 100);
   assert.equal(q.transferFeeGbp, 0.5);
   assert.equal(q.calculated, true);
   assert.throws(() =>

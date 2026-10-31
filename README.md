@@ -23,7 +23,7 @@ Currency sections include provider tables and markup charts. Revolut fees are de
 
 ## API and code
 
-- `GET /api/convert`: latest saved snapshots; optional `senderCountry`, `sourceCurrency`, `currency` and `gbpAmount` filters. Read-only.
+- `GET /api/convert`: latest saved snapshots; optional `senderCountry`, `sourceCurrency`, `currency` and `gbpAmount` filters. Add `days` to return saved history for that range. Read-only.
 - `GET /api/convert/meta`: supported currencies and amounts.
 - `POST /api/mcp`: public, read-only MCP server for inspecting both saved quote collections.
 - `GET /api/cron/update-quotes`: manually triggered endpoint that refreshes every supported currency and GBP amount. Requires `Authorization: Bearer <CRON_SECRET>`; missing or incorrect tokens return HTTP 401.
@@ -57,7 +57,7 @@ The site navigation links to `/convert` (existing saved conversion charts and ta
 
 ## Send comparisons
 
-`/send` reuses the Convert filters, Graph/Table views, quote-date selection and hourly/daily chart aggregation. It reads only `send_snapshots` in MongoDB. `/api/send` and `/api/send/meta` provide read-only saved results and metadata. No live provider requests are made when either page loads.
+`/send` reuses the Convert filters, Graph/Table views, quote-date selection and hourly/daily chart aggregation. It reads only `send_snapshots` in MongoDB. `/api/send` and `/api/send/meta` provide read-only saved results and metadata. Add `days` to `/api/send` to return saved history for that range. No live provider requests are made when either page loads.
 
 The bearer-protected `/api/cron/update-quotes` now updates both Convert and Send, with a `mode` on each result and explicit provider errors. There is no automatic Vercel schedule.
 
@@ -73,7 +73,7 @@ Requests and snapshots carry `senderCountry` and `sourceCurrency`. Wise receives
 
 The protected update endpoint refreshes United Kingdom and Ireland profiles only. Add `?senderCountry=IE` or `?senderCountry=GB` to update one country. Spain updates are disabled, including explicit `?senderCountry=ES` requests. Spain is not a supported profile in the dropdown or read-only endpoints. No live quote fetching occurs when viewing the pages.
 
-For backward compatibility, stored quote properties named `feeGbp`, `costGbp` and related fee fields contain values in the snapshot's `sourceCurrency`; always use that field to interpret amounts. Existing `gbpAmount` query parameters remain supported; ingestion also accepts `amount`.
+Quote `sourceAmount`, `feeGbp` and related amount fields use the snapshot's `sourceCurrency`; always use that field to interpret amounts. Older saved snapshots with `costGbp` are returned as `sourceAmount`. Existing `gbpAmount` query parameters remain supported; ingestion also accepts `amount`.
 
 ## Code organization
 

@@ -123,11 +123,19 @@ test("Country storage separates EUR markets while retaining legacy UK snapshots"
     currency: "GBP",
     amount: 100,
     fetchedAt: new Date().toISOString(),
-    quotes: [],
+    quotes: [
+      {
+        provider: "Revolut",
+        costGbp: 100,
+        receivedAmount: 84,
+      },
+    ],
     errors: [],
   });
   assert.equal(doc.senderCountry, "IE");
   assert.equal(doc.sourceCurrency, "EUR");
+  assert.equal(doc.quotes[0].sourceAmount, 100);
+  assert.equal("costGbp" in doc.quotes[0], false);
 });
 test("Ireland requests EUR quotes with correct account country and EUR paid-plan estimates", async (t) => {
   t.mock.method(conversionStore, "save", async () => "id");
