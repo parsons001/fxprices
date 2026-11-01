@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { authClient } from "../../lib/auth-client";
+import LocalizedDate from "../layout/localized-date";
 
 export default function ProfileSettings({ user, accounts }) {
   const [name, setName] = useState(user.name ?? "");
@@ -145,12 +146,10 @@ export default function ProfileSettings({ user, accounts }) {
           <div className="flex items-center justify-between gap-4 py-3">
             <dt className="text-muted-foreground">Member since</dt>
             <dd className="text-right font-medium">
-              {user.createdAt
-                ? new Date(user.createdAt).toLocaleDateString("en-GB", {
-                    dateStyle: "medium",
-                    timeZone: "UTC",
-                  })
-                : "—"}
+              <LocalizedDate
+                value={user.createdAt}
+                options={{ dateStyle: "medium" }}
+              />
             </dd>
           </div>
         </dl>

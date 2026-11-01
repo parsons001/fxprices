@@ -106,6 +106,7 @@ export default function QuoteTable({
                   currency={currency}
                   isSend={isSend}
                   sourceCurrency={sourceCurrency}
+                  formatDate={formatDate}
                 />
               ))}
             </tbody>
@@ -130,7 +131,14 @@ export default function QuoteTable({
   );
 }
 
-function PairRows({ rows, pair, currency, isSend, sourceCurrency }) {
+function PairRows({
+  rows,
+  pair,
+  currency,
+  isSend,
+  sourceCurrency,
+  formatDate,
+}) {
   return (
     <>
       {pair.storage?.saved === false && (
@@ -155,7 +163,7 @@ function PairRows({ rows, pair, currency, isSend, sourceCurrency }) {
                 className="block text-xs text-muted-foreground"
                 title={
                   row.convertFeeDate
-                    ? `Send fee minus nearest saved Convert fee (${row.convertFeeDate})${row.convertFeeEstimated ? "; estimated Convert fee" : ""}`
+                    ? `Send fee minus nearest saved Convert fee (${formatDate(row.convertFeeDate, { dateStyle: "medium", timeStyle: "short" })})${row.convertFeeEstimated ? "; estimated Convert fee" : ""}`
                     : "Nearby matching Convert fee unavailable"
                 }
               >

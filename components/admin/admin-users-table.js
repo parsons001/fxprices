@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Ellipsis } from "lucide-react";
 import { USER_ROLES } from "../../lib/user-roles.js";
+import LocalizedDate from "../layout/localized-date";
 
 const ROLE_OPTIONS = [
   { value: USER_ROLES.STANDARD, label: "Standard" },
@@ -127,12 +128,10 @@ export default function AdminUsersTable({ users, currentUserId }) {
                     {user.banned ? "Suspended" : "Active"}
                   </td>
                   <td className="whitespace-nowrap px-5 py-3.5 text-muted-foreground">
-                    {user.createdAt
-                      ? new Date(user.createdAt).toLocaleDateString("en-GB", {
-                          dateStyle: "medium",
-                          timeZone: "UTC",
-                        })
-                      : "—"}
+                    <LocalizedDate
+                      value={user.createdAt}
+                      options={{ dateStyle: "medium" }}
+                    />
                   </td>
                   <td className="whitespace-nowrap px-5 py-3.5">
                     <button

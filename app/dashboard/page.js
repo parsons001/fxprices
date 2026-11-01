@@ -1,5 +1,14 @@
 import { unstable_cache } from "next/cache";
-import { Activity, Building2, Clock3, Database, Layers3 } from "lucide-react";
+import {
+  Activity,
+  ArrowDown,
+  ArrowUp,
+  Building2,
+  Clock3,
+  Database,
+  Layers3,
+  Minus,
+} from "lucide-react";
 import { conversionStore } from "../../lib/db/conversion-store.js";
 import { sendStore } from "../../lib/db/send-store.js";
 import { getCurrencySettings } from "../../lib/config/currencies.js";
@@ -8,6 +17,8 @@ import { resolveQuoteFilters } from "../../lib/quotes/quote-filters.js";
 import { attachConversionFees } from "../../lib/quotes/additional-fees.js";
 import { formatRate, money, quoteLabel } from "../../lib/utils/format.js";
 import { requireSignedInUser } from "../../lib/auth-session.js";
+import PageHeading from "../../components/layout/page-heading.js";
+import RelativeTime from "../../components/layout/relative-time.js";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -20,6 +31,22 @@ const getLatestMarketSnapshots = unstable_cache(
       sendStore.latest({ senderCountry, sourceCurrency }),
     ]),
   ["dashboard-market-overview-latest-v1"],
+  { revalidate: 60 },
+);
+
+const getPreviousHourSnapshots = unstable_cache(
+  async (senderCountry, sourceCurrency) => {
+    const target = new Date(Date.now() - 60 * 60 * 1000);
+    return Promise.all([
+      conversionStore.nearestSnapshot({
+        target,
+        senderCountry,
+        sourceCurrency,
+      }),
+      sendStore.nearestSnapshot({ target, senderCountry, sourceCurrency }),
+    ]);
+  },
+  ["dashboard-market-overview-previous-hour-v1"],
   { revalidate: 60 },
 );
 
@@ -42,9 +69,11 @@ export default async function DashboardPage({ searchParams = {} }) {
   );
   const [
     [conversionSnapshots, sendSnapshots],
+    [previousConversionSnapshots, previousSendSnapshots],
     [conversionAllTimeDataPoints, sendAllTimeDataPoints],
   ] = await Promise.all([
     getLatestMarketSnapshots(senderCountry, sourceCurrency),
+    getPreviousHourSnapshots(senderCountry, sourceCurrency),
     Promise.all([
       conversionStore.allTimeDataPoints(),
       sendStore.allTimeDataPoints(),
@@ -80,88 +109,77 @@ export default async function DashboardPage({ searchParams = {} }) {
   const profile = senderConfig(senderCountry);
 
   return (
-    <main className="mx-auto max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
-      <header className="flex h-16 items-center gap-2 border-b text-sm">
-        <span className="text-muted-foreground">Dashboard</span>
-        <span aria-hidden="true" className="text-muted-foreground">
-          /
-        </span>
-        <span className="font-medium">Market overview</span>
-      </header>
+    <>
+      <PageHeading
+        breadcrumb="Overview"
+        title="Market overview"
+        description={`Latest saved quote comparisons for ${profile.name}`}
+      />
+      <main className="mx-auto max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
+        <section
+          aria-label="Market summary"
+          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
+        >
+          <SummaryCard
+            label="Currency pairs stored"
+            value={String(currencyPairs.size)}
+            detail={`${sourceCurrency} pairs across Convert and Send`}
+            Icon={Layers3}
+          />
+          <SummaryCard
+            label="Data points"
+            value={dataPoints.toLocaleString("en-GB")}
+            detail="Provider quotes in latest saved snapshots"
+            Icon={Database}
+          />
+          <SummaryCard
+            label="All-time data points"
+            value={(
+              conversionAllTimeDataPoints + sendAllTimeDataPoints
+            ).toLocaleString("en-GB")}
+            detail="Provider quotes saved across all history"
+            Icon={Activity}
+          />
+          <SummaryCard
+            label="Providers"
+            value={String(providers.size)}
+            detail={[...providers].sort().join(", ") || "No saved providers"}
+            Icon={Building2}
+          />
+          <SummaryCard
+            label="Last updated"
+            value={
+              latestFetchedAt ? (
+                <RelativeTime value={latestFetchedAt} />
+              ) : (
+                "No saved quotes"
+              )
+            }
+            detail={
+              latestFetchedAt ? "Latest quotes update" : "No saved quotes yet"
+            }
+            Icon={Clock3}
+          />
+        </section>
 
-      <div className="pb-6 pt-7">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Market overview
-        </h1>
-        <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-          Latest saved quote comparisons for {profile.name} · {sourceCurrency}{" "}
-          {money(Number(selectedAmount), sourceCurrency)} budget
-        </p>
-      </div>
-
-      <section
-        aria-label="Market summary"
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
-      >
-        <SummaryCard
-          label="Currency pairs stored"
-          value={String(currencyPairs.size)}
-          detail={`${sourceCurrency} pairs across Convert and Send`}
-          Icon={Layers3}
-        />
-        <SummaryCard
-          label="Data points"
-          value={dataPoints.toLocaleString("en-GB")}
-          detail="Provider quotes in latest saved snapshots"
-          Icon={Database}
-        />
-        <SummaryCard
-          label="All-time data points"
-          value={(
-            conversionAllTimeDataPoints + sendAllTimeDataPoints
-          ).toLocaleString("en-GB")}
-          detail="Provider quotes saved across all history"
-          Icon={Activity}
-        />
-        <SummaryCard
-          label="Providers"
-          value={String(providers.size)}
-          detail={[...providers].sort().join(", ") || "No saved providers"}
-          Icon={Building2}
-        />
-        <SummaryCard
-          label="Last updated"
-          value={
-            latestFetchedAt
-              ? new Date(latestFetchedAt).toLocaleString("en-GB", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                  timeZone: "UTC",
-                })
-              : "No saved quotes"
-          }
-          detail={
-            latestFetchedAt ? "Latest saved quote · UTC" : "No saved quotes yet"
-          }
-          Icon={Clock3}
-        />
-      </section>
-
-      <div className="mt-8 grid gap-6 xl:grid-cols-2">
-        <MarketSection
-          title="Conversion rates"
-          description={`Best provider by amount received for a ${money(Number(selectedAmount), sourceCurrency)} amount.`}
-          snapshots={snapshots}
-          sourceCurrency={sourceCurrency}
-        />
-        <MarketSection
-          title="Transfer rates"
-          description={`Best provider by amount received for a ${money(Number(selectedAmount), sourceCurrency)} amount.`}
-          snapshots={sendMarkets}
-          sourceCurrency={sourceCurrency}
-        />
-      </div>
-    </main>
+        <div className="mt-8 grid gap-6 xl:grid-cols-2">
+          <MarketSection
+            title="Conversion rates"
+            description={`Best provider by amount received for a ${money(Number(selectedAmount), sourceCurrency)} amount.`}
+            snapshots={snapshots}
+            previousSnapshots={previousConversionSnapshots}
+            sourceCurrency={sourceCurrency}
+          />
+          <MarketSection
+            title="Transfer rates"
+            description={`Best provider by amount received for a ${money(Number(selectedAmount), sourceCurrency)} amount.`}
+            snapshots={sendMarkets}
+            previousSnapshots={previousSendSnapshots}
+            sourceCurrency={sourceCurrency}
+          />
+        </div>
+      </main>
+    </>
   );
 }
 
@@ -180,16 +198,23 @@ function SummaryCard({ label, value, detail, Icon }) {
   );
 }
 
-function MarketSection({ title, description, snapshots, sourceCurrency }) {
+function MarketSection({
+  title,
+  description,
+  snapshots,
+  previousSnapshots,
+  sourceCurrency,
+}) {
+  const previousBestQuotes = new Map(
+    previousSnapshots.map((snapshot) => [
+      `${snapshot.currency}-${snapshot.amount}`,
+      bestDashboardQuote(snapshot),
+    ]),
+  );
   const available = snapshots
     .map((snapshot) => ({
       ...snapshot,
-      bestQuote: snapshot.quotes
-        .filter(
-          (quote) =>
-            isDashboardQuote(quote) && Number.isFinite(quote.receivedAmount),
-        )
-        .sort((a, b) => b.receivedAmount - a.receivedAmount)[0],
+      bestQuote: bestDashboardQuote(snapshot),
     }))
     .filter((snapshot) => snapshot.bestQuote);
 
@@ -239,10 +264,21 @@ function MarketSection({ title, description, snapshots, sourceCurrency }) {
                     {formatRate(snapshot.bestQuote.rate)}
                   </td>
                   <td className="whitespace-nowrap px-5 py-3.5 text-right font-medium tabular-nums">
-                    {money(
-                      snapshot.bestQuote.receivedAmount,
-                      snapshot.currency,
-                    )}
+                    <span className="inline-flex items-center justify-end gap-1.5">
+                      {money(
+                        snapshot.bestQuote.receivedAmount,
+                        snapshot.currency,
+                      )}
+                      <ReceivedTrend
+                        current={snapshot.bestQuote.receivedAmount}
+                        previous={
+                          previousBestQuotes.get(
+                            `${snapshot.currency}-${snapshot.amount}`,
+                          )?.receivedAmount
+                        }
+                        currency={snapshot.currency}
+                      />
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -255,6 +291,47 @@ function MarketSection({ title, description, snapshots, sourceCurrency }) {
         </p>
       )}
     </section>
+  );
+}
+
+function bestDashboardQuote(snapshot) {
+  return snapshot.quotes
+    .filter(
+      (quote) =>
+        isDashboardQuote(quote) && Number.isFinite(quote.receivedAmount),
+    )
+    .sort((a, b) => b.receivedAmount - a.receivedAmount)[0];
+}
+
+function ReceivedTrend({ current, previous, currency }) {
+  if (!Number.isFinite(previous)) return null;
+
+  const fractionDigits = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency,
+  }).resolvedOptions().maximumFractionDigits;
+  const scale = 10 ** fractionDigits;
+  const difference = Math.round(current * scale) - Math.round(previous * scale);
+  const Icon = difference > 0 ? ArrowUp : difference < 0 ? ArrowDown : Minus;
+  const label =
+    difference > 0 ? "Increased" : difference < 0 ? "Decreased" : "Unchanged";
+  const color =
+    difference > 0
+      ? "text-emerald-700"
+      : difference < 0
+        ? "text-red-700"
+        : "text-muted-foreground";
+
+  return (
+    <span
+      title={`${label} compared with the closest quote from about one hour ago`}
+      className={color}
+    >
+      <Icon className="size-4" aria-hidden="true" />
+      <span className="sr-only">
+        {label} compared with the closest quote from about one hour ago
+      </span>
+    </span>
   );
 }
 
