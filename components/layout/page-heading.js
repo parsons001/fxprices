@@ -3,7 +3,7 @@ export default function PageHeading({ mode }) {
   return (
     <>
       <header className="flex h-16 items-center gap-2 border-b bg-card px-4 text-sm sm:px-6 lg:px-8">
-        <span className="text-muted-foreground">Workspace</span>
+        <span className="text-muted-foreground">Dashboard</span>
         <span aria-hidden="true" className="text-muted-foreground">
           /
         </span>

@@ -1,33 +1,33 @@
-import Link from "next/link";
+import { headers } from "next/headers";
 import { requireSignedInUser } from "../../lib/auth-session.js";
+import ProfileSettings from "../../components/auth/profile-settings.js";
+import { getAuth } from "../../lib/auth.js";
 
 export const metadata = { title: "Your profile" };
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const session = await requireSignedInUser("/profile");
+  const auth = await getAuth();
+  const accounts = await auth.api.listUserAccounts({
+    headers: await headers(),
+  });
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-      <section className="rounded-xl border bg-card p-6 sm:p-8">
-        <p className="text-sm font-medium text-muted-foreground">Account</p>
-        <h1 className="mt-2 text-2xl font-semibold">Your profile</h1>
-        <dl className="mt-6 grid gap-4 text-sm">
-          <div>
-            <dt className="text-muted-foreground">Name</dt>
-            <dd className="mt-1 font-medium">{session.user.name}</dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Email</dt>
-            <dd className="mt-1 font-medium">{session.user.email}</dd>
-          </div>
-        </dl>
-        <Link
-          href="/convert"
-          className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          Return to quotes
-        </Link>
-      </section>
+    <main className="mx-auto max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
+      <header className="flex h-16 items-center gap-2 border-b bg-card text-sm">
+        <span className="text-muted-foreground">Dashboard</span>
+        <span aria-hidden="true" className="text-muted-foreground">
+          /
+        </span>
+        <span className="font-medium">Profile</span>
+      </header>
+      <div className="pb-6 pt-7">
+        <h1 className="text-2xl font-semibold tracking-tight">Your profile</h1>
+        <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+          Manage your account information and security.
+        </p>
+      </div>
+      <ProfileSettings user={session.user} accounts={accounts} />
     </main>
   );
 }

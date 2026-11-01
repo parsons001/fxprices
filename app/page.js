@@ -8,5 +8,5 @@ export default async function Home({ searchParams }) {
       value.forEach((entry) => query.append(key, entry));
     else if (value !== undefined) query.set(key, value);
   }
-  redirect(query.size ? `/convert?${query}` : "/convert");
+  redirect(query.size ? `/dashboard?${query}` : "/dashboard");
 }

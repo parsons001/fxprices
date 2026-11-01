@@ -23,10 +23,19 @@ Configure these server-only variables in `.env.local` and in the deployment envi
 
 - `BETTER_AUTH_SECRET`: random secret of at least 32 characters.
 - `BETTER_AUTH_URL`: canonical site origin, such as `https://fx.example.com`.
+- `BETTER_AUTH_TRUSTED_ORIGINS`: optional comma-separated extra website origins if you use a custom development port, preview deployment, or a separate frontend origin. The configured `BETTER_AUTH_URL` and local `http://localhost:3000` / `http://127.0.0.1:3000` in development are trusted automatically; production origins should be listed explicitly.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: Google OAuth credentials. Add `${BETTER_AUTH_URL}/api/auth/callback/google` as an authorized redirect URI in Google Cloud.
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD` and `SMTP_FROM`: SMTP connection and sender settings. Use port `587` with `SMTP_SECURE=false` for STARTTLS, or port `465` with `SMTP_SECURE=true` for implicit TLS.
 
 The Better Auth handler is mounted at `/api/auth/[...all]`. Website pages are protected; existing data, metadata, MCP and quote API endpoints remain public for now. Quote-update endpoints continue to require their existing cron secret.
+
+User roles (`standard`, `subscribed`, `admin`) are stored in the Better Auth `user` collection. New accounts receive `standard`; authorization reads the stored role and does not infer admin status from an email address. To assign or change a role, run this command with MongoDB environment variables configured:
+
+```sh
+node --env-file=.env.local scripts/set-user-role.js --email=account@example.com --role=admin
+```
+
+Use `--role=standard` or `--role=subscribed` as needed. In a deployment environment where MongoDB variables are already set, omit `--env-file=.env.local`.
 
 ## Saved results
 
@@ -66,7 +75,7 @@ Chart ranges include Last 24 hours and Last 7 days with UTC hourly points (multi
 
 ## Navigation
 
-The site navigation links to `/convert` (existing saved conversion charts and tables) and `/send` (saved bank-transfer comparisons). `/` redirects to `/convert`, preserving filter query parameters.
+The site navigation links to `/dashboard` (market overview), `/convert` (saved conversion charts and tables) and `/send` (saved bank-transfer comparisons). `/` redirects to `/dashboard`, preserving filter query parameters.
 
 ## Send comparisons
 
