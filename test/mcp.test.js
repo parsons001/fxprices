@@ -19,7 +19,17 @@ function fakeDatabase(collections, aggregateResults = {}) {
         aggregate: (pipeline) => ({
           toArray: async () => {
             calls.push({ method: "aggregate", name, pipeline });
-            return aggregateResults[name] ?? [];
+            if (
+              aggregateResults[name] &&
+              !pipeline.some((stage) => stage.$unwind === "$quotes")
+            ) {
+              return aggregateResults[name].midMarketRates ?? [];
+            }
+            return (
+              aggregateResults[name]?.quoteResults ??
+              aggregateResults[name] ??
+              []
+            );
           },
         }),
         find: (filter, options) => {
@@ -72,6 +82,7 @@ test("MCP quote tool returns paged daily average rates for both collections", as
     sourceCurrency: "GBP",
     currency: "EUR",
     amount: 500,
+    midMarketRate: 1.17,
     quotes: [
       {
         provider: "Wise",
@@ -90,12 +101,40 @@ test("MCP quote tool returns paged daily average rates for both collections", as
       send_snapshots: [],
     },
     {
-      conversion_snapshots: [
-        { metadata: [{ total: 2 }], dailyAverages: [dailyAverage] },
-      ],
-      send_snapshots: [
-        { metadata: [{ total: 1 }], dailyAverages: [dailyAverage] },
-      ],
+      conversion_snapshots: {
+        quoteResults: [
+          { metadata: [{ total: 2 }], dailyAverages: [dailyAverage] },
+        ],
+        midMarketRates: [
+          {
+            _id: {
+              date: "2026-10-16",
+              senderCountry: "GB",
+              sourceCurrency: "GBP",
+              currency: "EUR",
+              amount: 500,
+            },
+            midMarketRate: 1.17,
+          },
+        ],
+      },
+      send_snapshots: {
+        quoteResults: [
+          { metadata: [{ total: 1 }], dailyAverages: [dailyAverage] },
+        ],
+        midMarketRates: [
+          {
+            _id: {
+              date: "2026-10-16",
+              senderCountry: "GB",
+              sourceCurrency: "GBP",
+              currency: "EUR",
+              amount: 500,
+            },
+            midMarketRate: 1.17,
+          },
+        ],
+      },
     },
   );
   const result = await invokeTool(

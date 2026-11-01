@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
+import { authClient } from "../../lib/auth-client";
 
 export default function OAuthConsent({ oauthQuery }) {
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
   const [clientName, setClientName] = useState("");
   const [error, setError] = useState("");
   const [isLoadingClient, setIsLoadingClient] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [decision, setDecision] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -52,7 +55,7 @@ export default function OAuthConsent({ oauthQuery }) {
   }, [oauthQuery]);
 
   async function respond(accept) {
-    setIsSubmitting(true);
+    setDecision(accept ? "allow" : "deny");
     setError("");
     try {
       const response = await fetch("/api/auth/oauth2/consent", {
@@ -70,23 +73,46 @@ export default function OAuthConsent({ oauthQuery }) {
         requestError.message ||
           "Your authorization response could not be processed.",
       );
-      setIsSubmitting(false);
+      setDecision(null);
     }
   }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg items-center px-4 py-12">
-      <Card as="section" className="w-full p-6 shadow-sm">
-        <h1 className="text-xl font-semibold">Authorize MCP access</h1>
-        <p className="mt-3 text-sm text-muted-foreground">
+      <Card
+        as="section"
+        aria-busy={isLoadingClient || Boolean(decision)}
+        className="w-full p-6 shadow-sm"
+      >
+        <h1 className="text-xl font-semibold">
+          {session?.user
+            ? `Hi ${session.user.name?.trim() || "there"}, authorize MCP access`
+            : "Authorize MCP access"}
+        </h1>
+        <p
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="mt-3 text-sm text-muted-foreground"
+        >
           {isLoadingClient
-            ? "Verifying the requesting app…"
-            : `${clientName} is requesting read-only access to saved FX quote data.`}
+            ? "Verifying the requesting app and checking its access request…"
+            : decision === "allow"
+              ? "Granting read-only access and returning you to the requesting app…"
+              : decision === "deny"
+                ? "Declining the request and returning you to the requesting app…"
+                : `${clientName} is requesting read-only access to saved FX quote data.`}
         </p>
         <p className="mt-3 rounded-md bg-muted p-3 text-sm">
-          Permission requested: <code>mcp:read</code>. This allows the client to
-          read saved quote summaries and daily average rates.
+          Permission requested: <code>mcp:read</code>. If you allow, the app can
+          read saved quote summaries and daily average rates. It cannot change
+          your data.
         </p>
+        {!isLoadingClient && !error && !decision && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Choose Allow to connect, or Deny to return without granting access.
+          </p>
+        )}
         {error && (
           <p role="alert" className="mt-4 text-sm text-destructive">
             {error}
@@ -95,18 +121,18 @@ export default function OAuthConsent({ oauthQuery }) {
         <div className="mt-6 flex justify-end gap-3">
           <Button
             type="button"
-            disabled={isLoadingClient || isSubmitting || Boolean(error)}
+            disabled={isLoadingClient || Boolean(decision) || Boolean(error)}
             variant="outline"
             onClick={() => respond(false)}
           >
-            Deny
+            {decision === "deny" ? "Declining…" : "Deny"}
           </Button>
           <Button
             type="button"
-            disabled={isLoadingClient || isSubmitting || Boolean(error)}
+            disabled={isLoadingClient || Boolean(decision) || Boolean(error)}
             onClick={() => respond(true)}
           >
-            {isSubmitting ? "Continuing…" : "Allow access"}
+            {decision === "allow" ? "Approving…" : "Allow access"}
           </Button>
         </div>
       </Card>
