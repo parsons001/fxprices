@@ -23,6 +23,7 @@ export default function SiteNavigation() {
     "/sign-up",
     "/forgot-password",
     "/reset-password",
+    "/oauth/consent",
   ].includes(pathname);
 
   if (authPage) return null;

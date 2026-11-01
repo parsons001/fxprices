@@ -6,7 +6,7 @@ import { createFxMcpServer } from "../lib/mcp/server.js";
 import { handleMcpRequest } from "../lib/mcp/http-handler.js";
 import { getTestCurrencySettings } from "./currency-settings-fixture.js";
 
-function fakeDatabase(collections) {
+function fakeDatabase(collections, aggregateResults = {}) {
   const calls = [];
   return {
     calls,
@@ -19,7 +19,7 @@ function fakeDatabase(collections) {
         aggregate: (pipeline) => ({
           toArray: async () => {
             calls.push({ method: "aggregate", name, pipeline });
-            return [];
+            return aggregateResults[name] ?? [];
           },
         }),
         find: (filter, options) => {
@@ -65,18 +65,39 @@ async function invokeTool(server, name, args) {
   }
 }
 
-test("MCP snapshot tool pages both read-only quote collections", async () => {
-  const snapshot = {
-    _id: { toString: () => "snapshot-1" },
+test("MCP quote tool returns paged daily average rates for both collections", async () => {
+  const dailyAverage = {
+    date: "2026-10-16",
+    senderCountry: "GB",
+    sourceCurrency: "GBP",
     currency: "EUR",
     amount: 500,
-    fetchedAt: new Date("2026-10-16T12:00:00.000Z"),
-    quotes: [{ provider: "Wise", feeGbp: 1.2 }],
+    quotes: [
+      {
+        provider: "Wise",
+        planId: null,
+        option: null,
+        averageRate: 1.16,
+        averageFeeGbp: 1.2,
+        averageReceivedAmount: 578,
+        sampleCount: 24,
+      },
+    ],
   };
-  const db = fakeDatabase({
-    conversion_snapshots: [snapshot, snapshot],
-    send_snapshots: [snapshot],
-  });
+  const db = fakeDatabase(
+    {
+      conversion_snapshots: [],
+      send_snapshots: [],
+    },
+    {
+      conversion_snapshots: [
+        { metadata: [{ total: 2 }], dailyAverages: [dailyAverage] },
+      ],
+      send_snapshots: [
+        { metadata: [{ total: 1 }], dailyAverages: [dailyAverage] },
+      ],
+    },
+  );
   const result = await invokeTool(
     createFxMcpServer(async () => db, getTestCurrencySettings),
     "list_quote_snapshots",
@@ -88,22 +109,40 @@ test("MCP snapshot tool pages both read-only quote collections", async () => {
       collection: collection.collection,
       total: collection.total,
       hasMore: collection.hasMore,
-      snapshots: collection.snapshots.length,
+      dailyAverages: collection.dailyAverages.length,
     })),
     [
       {
         collection: "conversion_snapshots",
         total: 2,
         hasMore: false,
-        snapshots: 1,
+        dailyAverages: 1,
       },
-      { collection: "send_snapshots", total: 1, hasMore: false, snapshots: 0 },
+      {
+        collection: "send_snapshots",
+        total: 1,
+        hasMore: false,
+        dailyAverages: 1,
+      },
     ],
   );
-  assert.equal(
-    result.structuredContent.collections[0].snapshots[0].id,
-    "snapshot-1",
+  assert.deepEqual(
+    result.structuredContent.collections[0].dailyAverages[0],
+    dailyAverage,
   );
+  const pipeline = db.calls.find(
+    (call) => call.method === "aggregate",
+  ).pipeline;
+  assert.ok(pipeline.some((stage) => stage.$unwind === "$quotes"));
+  const firstGroup = pipeline.find((stage) => stage.$group).$group;
+  assert.deepEqual(firstGroup._id.date, {
+    $dateToString: {
+      format: "%Y-%m-%d",
+      date: "$fetchedAt",
+      timezone: "UTC",
+    },
+  });
+  assert.deepEqual(firstGroup.averageRate, { $avg: "$quotes.rate" });
   assert.equal(
     db.calls.every((call) => call.method !== "insertOne"),
     true,
@@ -132,8 +171,10 @@ test("MCP overview exposes collection and market counts", async () => {
   );
 });
 
-test("MCP endpoint is public, speaks stateless Streamable HTTP, and lists read-only tools", async () => {
-  const response = await handleMcpRequest(
+test("MCP endpoint requires OAuth and serves read-only Streamable HTTP tools", async () => {
+  const previousBaseURL = process.env.BETTER_AUTH_URL;
+  process.env.BETTER_AUTH_URL = "https://example.test";
+  const unauthorized = await handleMcpRequest(
     new Request("https://example.test/api/mcp", {
       method: "POST",
       headers: {
@@ -152,6 +193,38 @@ test("MCP endpoint is public, speaks stateless Streamable HTTP, and lists read-o
       }),
     }),
   );
+  assert.equal(unauthorized.status, 401);
+  assert.match(
+    unauthorized.headers.get("WWW-Authenticate"),
+    /resource_metadata=/,
+  );
+
+  const response = await handleMcpRequest(
+    new Request("https://example.test/api/mcp", {
+      method: "POST",
+      headers: {
+        Accept: "application/json, text/event-stream",
+        "Content-Type": "application/json",
+        Authorization: "Bearer test-access-token",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-03-26",
+          capabilities: {},
+          clientInfo: { name: "mcp-test", version: "1.0.0" },
+        },
+      }),
+    }),
+    async () => ({
+      token: "test-access-token",
+      clientId: "test-client",
+      scopes: ["mcp:read"],
+      resource: new URL("https://example.test/api/mcp"),
+    }),
+  );
   assert.equal(response.status, 200);
   const initialized = await response.json();
   assert.equal(initialized.result.serverInfo.name, "fx-prices-readonly");
@@ -162,6 +235,7 @@ test("MCP endpoint is public, speaks stateless Streamable HTTP, and lists read-o
       headers: {
         Accept: "application/json, text/event-stream",
         "Content-Type": "application/json",
+        Authorization: "Bearer test-access-token",
       },
       body: JSON.stringify({
         jsonrpc: "2.0",
@@ -169,6 +243,12 @@ test("MCP endpoint is public, speaks stateless Streamable HTTP, and lists read-o
         method: "tools/list",
         params: {},
       }),
+    }),
+    async () => ({
+      token: "test-access-token",
+      clientId: "test-client",
+      scopes: ["mcp:read"],
+      resource: new URL("https://example.test/api/mcp"),
     }),
   );
   const toolList = await tools.json();
@@ -179,4 +259,6 @@ test("MCP endpoint is public, speaks stateless Streamable HTTP, and lists read-o
   assert.ok(
     toolList.result.tools.every((tool) => tool.annotations?.readOnlyHint),
   );
+  if (previousBaseURL === undefined) delete process.env.BETTER_AUTH_URL;
+  else process.env.BETTER_AUTH_URL = previousBaseURL;
 });

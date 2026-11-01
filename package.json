@@ -14,12 +14,14 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@better-auth/oauth-provider": "^1.7.15",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@radix-ui/react-select": "^2.3.7",
     "@tailwindcss/postcss": "^4.3.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/global-config": "^1.5.1",
-    "better-auth": "^1.7.14",
+    "ai": "^7.0.159",
+    "better-auth": "^1.7.15",
     "clsx": "^2.1.1",
     "lucide-react": "^1.47.0",
     "mongodb": "7.6.0",
@@ -27,12 +29,17 @@
     "nodemailer": "^10.3.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.10.1",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "prettier": "^3.9.9"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

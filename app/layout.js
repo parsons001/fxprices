@@ -1,7 +1,6 @@
-import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-import SiteNavigation from "../components/layout/site-navigation";
+import SiteShell from "../components/layout/site-shell";
 export const metadata = {
   title: { default: "FX", template: "%s | FX" },
   description: "Compare Wise and Revolut conversion rates, fees and markup.",
@@ -16,16 +15,7 @@ export default function Layout({ children }) {
         >
           Skip to content
         </a>
-        <Suspense
-          fallback={
-            <div className="h-16 border-b lg:fixed lg:inset-y-0 lg:h-full lg:w-56 lg:border-r" />
-          }
-        >
-          <SiteNavigation />
-        </Suspense>
-        <div id="workspace" className="min-w-0 lg:ml-56">
-          {children}
-        </div>
+        <SiteShell>{children}</SiteShell>
         <Analytics />
       </body>
     </html>

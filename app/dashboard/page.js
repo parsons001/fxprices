@@ -19,6 +19,7 @@ import { formatRate, money, quoteLabel } from "../../lib/utils/format.js";
 import { requireSignedInUser } from "../../lib/auth-session.js";
 import PageHeading from "../../components/layout/page-heading.js";
 import RelativeTime from "../../components/layout/relative-time.js";
+import AiDataChat from "../../components/dashboard/ai-data-chat.js";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -161,6 +162,8 @@ export default async function DashboardPage({ searchParams = {} }) {
             Icon={Clock3}
           />
         </section>
+
+        <AiDataChat />
 
         <div className="mt-8 grid gap-6 xl:grid-cols-2">
           <MarketSection
