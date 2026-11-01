@@ -4,6 +4,7 @@ import * as React from "react";
 import { Combobox as ComboboxPrimitive } from "@base-ui/react";
 import { Check, X } from "lucide-react";
 import { cn } from "../../lib/utils/utils";
+import { buttonVariants } from "./button";
 
 const Combobox = ComboboxPrimitive.Root;
 
@@ -38,7 +39,11 @@ function ComboboxChip({ className, children, ...props }) {
           <button
             type="button"
             aria-label={`Remove ${children}`}
-            className="rounded-sm hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={buttonVariants({
+              variant: "ghost",
+              size: "icon-xs",
+              className: "hover:bg-background",
+            })}
           />
         }
       >

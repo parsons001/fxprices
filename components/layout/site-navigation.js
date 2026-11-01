@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
+import { Button } from "../ui/button";
+import SidebarNotification from "../ui/sidebar-notification";
+import { Card } from "../ui/card";
 import { authClient } from "../../lib/auth-client";
 import { USER_ROLES } from "../../lib/user-roles";
 
@@ -29,7 +32,7 @@ export default function SiteNavigation() {
   if (authPage) return null;
 
   return (
-    <aside className="border-b bg-card lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-56 lg:flex-col lg:border-r lg:border-b-0">
+    <aside className="border-sidebar-border bg-sidebar text-sidebar-foreground border-b lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-56 lg:flex-col lg:border-r lg:border-b-0">
       <div className="flex h-16 items-center justify-between border-b px-5">
         <Link
           href={`/dashboard?senderCountry=${country}`}
@@ -54,14 +57,14 @@ export default function SiteNavigation() {
             href="/profile"
             aria-label="Profile"
             aria-current={pathname.startsWith("/profile") ? "page" : undefined}
-            className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:hidden"
+            className="flex size-9 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:hidden"
           >
             <CircleUserRound className="size-5" aria-hidden="true" />
           </Link>
         )}
       </div>
       <nav aria-label="Main navigation" className="p-3 lg:p-4">
-        <p className="mb-3 hidden px-2 text-xs font-medium text-muted-foreground lg:block">
+        <p className="mb-3 hidden px-2 text-xs font-medium text-sidebar-foreground/70 lg:block">
           Dashboard
         </p>
         <div className="flex gap-2 lg:flex-col lg:gap-1">
@@ -84,7 +87,7 @@ export default function SiteNavigation() {
                 href={`${href}?senderCountry=${country}`}
                 prefetch={false}
                 aria-current={active ? "page" : undefined}
-                className={`flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 lg:w-full lg:flex-none ${active ? "bg-muted/60 text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}
+                className={`flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 lg:w-full lg:flex-none ${active ? "bg-sidebar-selected text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
               >
                 <Icon className="size-4 shrink-0" aria-hidden="true" />
                 {label}
@@ -99,10 +102,27 @@ export default function SiteNavigation() {
           })}
         </div>
       </nav>
-      <div className="mt-auto hidden px-3 pb-3 lg:block">
+      <div className="mt-auto hidden space-y-3 px-3 pb-3 lg:block">
+        <SidebarNotification
+          title="Add to ChatGPT"
+          description="Connect ChatGPT to read saved FX quotes and daily rates."
+        >
+          <div className="mt-2">
+            <Button
+              as="a"
+              href="https://chatgpt.com/plugins"
+              target="_blank"
+              rel="noreferrer"
+              size="sm"
+              className="w-full"
+            >
+              Add to ChatGPT
+            </Button>
+          </div>
+        </SidebarNotification>
         {session?.user && (
-          <div className="border-t pt-3">
-            <div className="rounded-lg border bg-background p-2">
+          <div className="border-sidebar-border border-t pt-3">
+            <Card className="p-2">
               <Link
                 href="/profile"
                 aria-current={
@@ -125,7 +145,7 @@ export default function SiteNavigation() {
                   </span>
                 </span>
               </Link>
-            </div>
+            </Card>
           </div>
         )}
       </div>

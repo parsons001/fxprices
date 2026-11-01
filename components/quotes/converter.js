@@ -6,6 +6,7 @@ import QuoteTable from "./quote-table";
 import { SENDER_COUNTRIES } from "../../lib/config/sender-countries";
 import { quoteLabel, markupFor, money } from "../../lib/utils/format";
 import QuoteLoadingState from "./quote-loading-state";
+import { Card } from "../ui/card";
 import { useBrowserDateFormatter } from "./use-browser-date-formatter";
 import {
   normalizeSnapshots,
@@ -35,15 +36,12 @@ export default function Converter({
       {isLoading ? (
         <QuoteLoadingState />
       ) : !safeSnapshots.length ? (
-        <div
-          role="status"
-          className="my-6 rounded-xl border border-dashed bg-card p-8 text-center"
-        >
+        <Card role="status" className="my-6 p-8 text-center">
           <h2 className="font-semibold">{emptyMessage}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Try another currency, amount or date range.
           </p>
-        </div>
+        </Card>
       ) : (
         <div className="min-w-0">
           {Object.entries(groups).map(([code, pairs]) => (
@@ -61,7 +59,7 @@ export default function Converter({
           ))}
         </div>
       )}
-      <footer className="mt-8 rounded-xl border bg-card">
+      <Card as="footer" className="mt-8">
         <details>
           <summary className="px-5 py-4 text-sm font-semibold sm:px-6">
             Sources and calculation notes
@@ -87,7 +85,7 @@ export default function Converter({
             )}
           </div>
         </details>
-      </footer>
+      </Card>
     </main>
   );
 }

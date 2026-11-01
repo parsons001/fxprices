@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { authClient } from "../../lib/auth-client";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
 
 const TITLES = {
   "sign-in": "Sign in to FX Compare",
@@ -100,7 +102,7 @@ export default function AuthForm({
   const isLoginPage = mode === "sign-in" || mode === "sign-up";
 
   return (
-    <main className="relative flex min-h-screen w-full flex-col items-center justify-center bg-muted px-4 py-10 sm:px-6 lg:-ml-56 lg:w-screen">
+    <main className="relative flex min-h-screen w-full flex-col items-center justify-center bg-muted px-4 py-10 sm:px-6">
       {isLoginPage && (
         <Link
           href="/sign-in"
@@ -119,8 +121,9 @@ export default function AuthForm({
           FX Compare
         </Link>
       )}
-      <section
-        className={`w-full rounded-xl border bg-card p-6 text-card-foreground shadow-sm sm:p-8 ${isLoginPage ? "max-w-[360px]" : "max-w-sm"}`}
+      <Card
+        as="section"
+        className={`w-full p-6 sm:p-8 ${isLoginPage ? "max-w-[360px]" : "max-w-sm"}`}
       >
         <div
           className={`${isLoginPage ? "mb-6" : "mb-7 mt-5"} flex flex-col items-center text-center`}
@@ -170,17 +173,18 @@ export default function AuthForm({
 
         {isLoginPage && (
           <>
-            <button
+            <Button
               type="button"
               onClick={signInWithGoogle}
               disabled={isLoading}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-60"
+              variant="outline"
+              className="w-full gap-2"
             >
               <span aria-hidden="true" className="text-base font-semibold">
                 G
               </span>
               Continue with Google
-            </button>
+            </Button>
             <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
               <span className="h-px flex-1 bg-border" />
               Or continue with email
@@ -259,11 +263,7 @@ export default function AuthForm({
                 />
               </div>
             )}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="mt-1 h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-60"
-            >
+            <Button type="submit" disabled={isLoading} className="mt-1">
               {isLoading
                 ? "Please wait…"
                 : mode === "sign-in"
@@ -273,7 +273,7 @@ export default function AuthForm({
                     : mode === "forgot-password"
                       ? "Send reset link"
                       : "Reset password"}
-            </button>
+            </Button>
           </form>
         )}
 
@@ -317,7 +317,7 @@ export default function AuthForm({
             </Link>
           )}
         </p>
-      </section>
+      </Card>
       {isLoginPage && (
         <p className="mt-6 max-w-sm text-center text-xs leading-5 text-muted-foreground">
           {mode === "sign-up"

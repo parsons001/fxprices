@@ -2,6 +2,7 @@
 
 import { SelectField } from "../ui/select-field";
 import { SelectItem } from "../ui/select";
+import { Card, CardContent, CardHeader } from "../ui/card";
 import { RANGE_OPTIONS, rangeLabel } from "../../lib/charts/chart-history";
 import { SENDER_COUNTRIES } from "../../lib/config/sender-countries";
 import { money } from "../../lib/utils/format";
@@ -39,12 +40,8 @@ export default function FilterControls({
   const providerAnchor = useComboboxAnchor();
 
   return (
-    <section
-      aria-labelledby="filter-heading"
-      aria-busy={isPending}
-      className="rounded-xl border bg-card"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b px-5 py-4 sm:px-6">
+    <Card as="section" aria-labelledby="filter-heading" aria-busy={isPending}>
+      <CardHeader className="flex-row flex-wrap items-center justify-between gap-4 border-b px-5 py-4 sm:px-6">
         <div>
           <h2 id="filter-heading" className="text-sm font-semibold">
             Filters
@@ -53,8 +50,8 @@ export default function FilterControls({
             View saved quotes by market and amount.
           </p>
         </div>
-      </div>
-      <div className="grid grid-cols-1 items-end gap-4 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-4">
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 items-end gap-4 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-4">
         <SelectField
           label="Profile country"
           name="senderCountry"
@@ -165,7 +162,7 @@ export default function FilterControls({
             </ComboboxContent>
           </Combobox>
         </div>
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

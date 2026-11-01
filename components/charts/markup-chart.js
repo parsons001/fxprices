@@ -4,6 +4,7 @@ import { aggregateHistory, rangeLabel } from "../../lib/charts/chart-history";
 import { chartCsv } from "../../lib/charts/chart-csv";
 import { formatPct } from "../../lib/utils/format";
 import { Card, CardContent, CardHeader } from "../ui/card";
+import { Button } from "../ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { useBrowserDateFormatter } from "../quotes/use-browser-date-formatter";
@@ -106,13 +107,14 @@ export default function MarkupChart({
       <CardHeader className="border-b px-5 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-semibold">Markup history</h3>
-          <button
+          <Button
             type="button"
             onClick={downloadCsv}
-            className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2"
+            variant="outline"
+            size="sm"
           >
             Download CSV
-          </button>
+          </Button>
         </div>
         <p className="text-sm leading-6 text-muted-foreground">
           Markup vs Wise mid-market: {rangeLabel(days).toLowerCase()} for the

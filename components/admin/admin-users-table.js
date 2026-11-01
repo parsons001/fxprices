@@ -6,6 +6,8 @@ import { createPortal } from "react-dom";
 import { Ellipsis } from "lucide-react";
 import { USER_ROLES } from "../../lib/user-roles.js";
 import LocalizedDate from "../layout/localized-date";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
 
 const ROLE_OPTIONS = [
   { value: USER_ROLES.STANDARD, label: "Standard" },
@@ -69,7 +71,7 @@ export default function AdminUsersTable({ users, currentUserId }) {
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-card">
+    <Card as="section" className="overflow-hidden">
       {error && (
         <p
           role="alert"
@@ -134,12 +136,14 @@ export default function AdminUsersTable({ users, currentUserId }) {
                     />
                   </td>
                   <td className="whitespace-nowrap px-5 py-3.5">
-                    <button
+                    <Button
                       type="button"
                       aria-label={`Actions for ${user.email}`}
                       aria-haspopup="menu"
                       aria-expanded={openMenu?.user.id === user.id}
                       disabled={isPending}
+                      variant="ghost"
+                      size="icon"
                       onClick={(event) => {
                         const rect =
                           event.currentTarget.getBoundingClientRect();
@@ -162,10 +166,9 @@ export default function AdminUsersTable({ users, currentUserId }) {
                             : { user, left, top },
                         );
                       }}
-                      className="flex size-9 list-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden"
                     >
                       <Ellipsis className="size-5" aria-hidden="true" />
-                    </button>
+                    </Button>
                     {openMenu?.user.id === user.id &&
                       createPortal(
                         <>
@@ -209,10 +212,12 @@ export default function AdminUsersTable({ users, currentUserId }) {
                               </select>
                             </label>
                             <div className="my-1 border-t" />
-                            <button
+                            <Button
                               type="button"
                               role="menuitem"
                               disabled={isSelf || isPending}
+                              variant="ghost"
+                              size="menu"
                               onClick={() => {
                                 setOpenMenu(null);
                                 performAction(
@@ -220,26 +225,26 @@ export default function AdminUsersTable({ users, currentUserId }) {
                                   user.banned ? "unsuspend" : "suspend",
                                 );
                               }}
-                              className="flex h-9 w-full items-center rounded-sm px-2 text-left text-sm hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
                             >
                               {isPending
                                 ? "Saving…"
                                 : user.banned
                                   ? "Unsuspend account"
                                   : "Suspend account"}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
                               role="menuitem"
                               disabled={isSelf || isPending}
+                              variant="destructive"
+                              size="menu"
                               onClick={() => {
                                 setOpenMenu(null);
                                 deleteUser(user);
                               }}
-                              className="flex h-9 w-full items-center rounded-sm px-2 text-left text-sm text-red-700 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-50"
                             >
                               Delete account
-                            </button>
+                            </Button>
                           </div>
                         </>,
                         document.body,
@@ -261,6 +266,6 @@ export default function AdminUsersTable({ users, currentUserId }) {
           </tbody>
         </table>
       </div>
-    </section>
+    </Card>
   );
 }

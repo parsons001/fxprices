@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import FilterControls from "./filter-controls";
 import Converter from "./converter";
+import { Card } from "../ui/card";
 import { attachConversionFees } from "../../lib/quotes/additional-fees";
 import {
   sourceCurrenciesForPairs,
@@ -263,21 +264,21 @@ export default function QuoteContent({
         onProvidersChange={updateProviders}
       />
       {conversionFeesMissing && (
-        <div
+        <Card
           role="alert"
-          className="mt-6 rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm text-amber-950"
+          className="mt-6 bg-amber-50 px-5 py-4 text-sm text-amber-950"
         >
           Conversion fees could not be loaded. International payment fees are
           temporarily unavailable and appear as —. Try refreshing the page.
-        </div>
+        </Card>
       )}
       {loadError && (
-        <div
+        <Card
           role="alert"
-          className="mt-6 rounded-xl border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-950"
+          className="mt-6 bg-red-50 px-5 py-4 text-sm text-red-950"
         >
           {loadError}
-        </div>
+        </Card>
       )}
       <Converter
         mode={mode}

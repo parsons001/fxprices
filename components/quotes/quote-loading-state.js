@@ -1,4 +1,5 @@
 import { Skeleton } from "../ui/skeleton";
+import { Card } from "../ui/card";
 
 export default function QuoteLoadingState() {
   return (
@@ -20,12 +21,12 @@ export default function QuoteLoadingState() {
           <Skeleton className="h-4 w-36" />
         </div>
       </div>
-      <div className="rounded-xl border bg-card p-5 sm:p-6">
+      <Card className="p-5 sm:p-6">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="mt-3 h-4 w-3/4" />
         <Skeleton className="mt-6 h-[220px] w-full sm:h-[290px]" />
-      </div>
-      <div className="overflow-hidden rounded-xl border bg-card">
+      </Card>
+      <Card className="overflow-hidden">
         <div className="border-b px-5 py-4 sm:px-6">
           <Skeleton className="h-5 w-36" />
           <Skeleton className="mt-2 h-4 w-52" />
@@ -39,7 +40,7 @@ export default function QuoteLoadingState() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

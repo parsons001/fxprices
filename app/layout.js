@@ -1,4 +1,5 @@
 import { Analytics } from "@vercel/analytics/next";
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import SiteShell from "../components/layout/site-shell";
 export const metadata = {
@@ -8,7 +9,7 @@ export const metadata = {
 export default function Layout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className={GeistSans.variable}>
         <a
           href="#workspace"
           className="sr-only z-50 rounded bg-primary p-3 text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4"

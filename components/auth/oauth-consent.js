@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
 
 export default function OAuthConsent({ oauthQuery }) {
   const [clientName, setClientName] = useState("");
@@ -74,7 +76,7 @@ export default function OAuthConsent({ oauthQuery }) {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg items-center px-4 py-12">
-      <section className="w-full rounded-xl border bg-card p-6 shadow-sm">
+      <Card as="section" className="w-full p-6 shadow-sm">
         <h1 className="text-xl font-semibold">Authorize MCP access</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           {isLoadingClient
@@ -91,24 +93,23 @@ export default function OAuthConsent({ oauthQuery }) {
           </p>
         )}
         <div className="mt-6 flex justify-end gap-3">
-          <button
+          <Button
             type="button"
             disabled={isLoadingClient || isSubmitting || Boolean(error)}
-            className="rounded-md border px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            variant="outline"
             onClick={() => respond(false)}
           >
             Deny
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             disabled={isLoadingClient || isSubmitting || Boolean(error)}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => respond(true)}
           >
             {isSubmitting ? "Continuing…" : "Allow access"}
-          </button>
+          </Button>
         </div>
-      </section>
+      </Card>
     </main>
   );
 }

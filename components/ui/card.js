@@ -1,10 +1,10 @@
 import { cn } from "../../lib/utils/utils";
 
-export function Card({ className, ...props }) {
+export function Card({ as: Component = "div", className, ...props }) {
   return (
-    <div
+    <Component
       className={cn(
-        "rounded-xl border bg-card text-card-foreground shadow-sm",
+        "card-outline bg-card text-card-foreground shadow-sm",
         className,
       )}
       {...props}

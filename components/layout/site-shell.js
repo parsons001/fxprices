@@ -21,7 +21,7 @@ export default function SiteShell({ children }) {
       {!standalone && (
         <Suspense
           fallback={
-            <div className="h-16 border-b lg:fixed lg:inset-y-0 lg:h-full lg:w-56 lg:border-r" />
+            <div className="border-sidebar-border bg-sidebar h-16 border-b lg:fixed lg:inset-y-0 lg:h-full lg:w-56 lg:border-r" />
           }
         >
           <SiteNavigation />

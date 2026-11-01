@@ -24,10 +24,8 @@ Configure these server-only variables in `.env.local` and in the deployment envi
 - `BETTER_AUTH_TRUSTED_ORIGINS`: optional comma-separated extra website origins if you use a custom development port, preview deployment, or a separate frontend origin. The configured `BETTER_AUTH_URL` and local `http://localhost:3000` / `http://127.0.0.1:3000` in development are trusted automatically; production origins should be listed explicitly.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: Google OAuth credentials. Add `${BETTER_AUTH_URL}/api/auth/callback/google` as an authorized redirect URI in Google Cloud.
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD` and `SMTP_FROM`: SMTP connection and sender settings. Use port `587` with `SMTP_SECURE=false` for STARTTLS, or port `465` with `SMTP_SECURE=true` for implicit TLS.
-- `AI_GATEWAY_API_KEY`: Vercel AI Gateway key for local development. Vercel deployments can use a Gateway key or configured OIDC authentication.
-- `AI_GATEWAY_MODEL`: required Gateway model ID, such as `openai/gpt-5.5`. Choose the model in your deployment configuration.
 
-The Better Auth handler is mounted at `/api/auth/[...all]`. Website pages are protected; the dashboard AI chat endpoint requires a signed-in session. The MCP endpoint requires OAuth authorization through existing FX Compare accounts. Quote-update endpoints continue to require their existing cron secret.
+The Better Auth handler is mounted at `/api/auth/[...all]`. Website pages are protected. The MCP endpoint requires OAuth authorization through existing FX Compare accounts. Quote-update endpoints continue to require their existing cron secret.
 
 User roles (`standard`, `subscribed`, `admin`) are stored in the Better Auth `user` collection. New accounts receive `standard`; authorization reads the stored role and does not infer admin status from an email address. To assign or change a role, run this command with MongoDB environment variables configured:
 
@@ -48,7 +46,6 @@ Currency sections include provider tables and markup charts. Revolut fees are de
 - `GET /api/convert`: latest saved snapshots; optional `senderCountry`, `sourceCurrency`, `currency` and `gbpAmount` filters. Add `days` to return saved history for that range. Read-only.
 - `GET /api/convert/meta`: supported currencies and amounts.
 - `POST /api/mcp`: OAuth-protected, read-only MCP server for inspecting both saved quote collections.
-- `POST /api/ai/chat`: authenticated dashboard assistant using Vercel AI Gateway and the read-only MCP quote tools.
 - `GET /api/cron/update-quotes`: manually triggered endpoint that refreshes every supported currency and GBP amount. Requires `Authorization: Bearer <CRON_SECRET>`; missing or incorrect tokens return HTTP 401.
 - `GET /api/quotes/live`: fetches the same conversion and bank-transfer quotes without saving them. Uses the same filters and authorization as the cron endpoint and returns the quote results in the response.
 - `app/page.js`: loads saved results on the server.
@@ -59,7 +56,7 @@ Currency sections include provider tables and markup charts. Revolut fees are de
 
 MCP clients connect to `https://<deployed-host>/api/mcp` using Streamable HTTP and OAuth 2.1 authorization-code flow with PKCE. Authorization uses the existing FX Compare sign-in and requires user consent for the `mcp:read` scope. OAuth discovery, protected-resource metadata, and dynamic client registration are enabled for MCP clients. `get_quote_database_overview` returns raw observation counts and date ranges by market. `list_quote_snapshots` returns paginated daily UTC averages from `conversion_snapshots` and `send_snapshots`, with country, currency, amount and date filters. Daily averages are grouped by market, provider and plan, and include average rate, fee, recipient amount, and observation count. Results are cached for one hour. Pagination is capped at 100 daily records per page. The tools are read-only and cannot modify the database.
 
-The dashboard's AI assistant calls these same MCP tools and only answers from saved quote data. User questions and the relevant quote data returned by MCP are sent to the configured Vercel AI Gateway model to generate responses; do not include sensitive information in questions.
+The Dashboard sidebar's ChatGPT card copies the MCP endpoint URL for adding FX Compare as a custom app/connector in ChatGPT. Complete the OAuth sign-in and consent when ChatGPT connects.
 
 `npm test` checks calculations, ingestion and the read-only public endpoint.
 

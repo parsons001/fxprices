@@ -19,7 +19,7 @@ import { formatRate, money, quoteLabel } from "../../lib/utils/format.js";
 import { requireSignedInUser } from "../../lib/auth-session.js";
 import PageHeading from "../../components/layout/page-heading.js";
 import RelativeTime from "../../components/layout/relative-time.js";
-import AiDataChat from "../../components/dashboard/ai-data-chat.js";
+import { Card } from "../../components/ui/card.js";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -163,8 +163,6 @@ export default async function DashboardPage({ searchParams = {} }) {
           />
         </section>
 
-        <AiDataChat />
-
         <div className="mt-8 grid gap-6 xl:grid-cols-2">
           <MarketSection
             title="Conversion rates"
@@ -188,7 +186,7 @@ export default async function DashboardPage({ searchParams = {} }) {
 
 function SummaryCard({ label, value, detail, Icon }) {
   return (
-    <article className="rounded-xl border bg-card p-5">
+    <Card as="article" className="p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-medium text-muted-foreground">{label}</h2>
         {Icon && <Icon className="size-4 text-muted-foreground" aria-hidden />}
@@ -197,7 +195,7 @@ function SummaryCard({ label, value, detail, Icon }) {
         {value}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
-    </article>
+    </Card>
   );
 }
 
@@ -222,7 +220,7 @@ function MarketSection({
     .filter((snapshot) => snapshot.bestQuote);
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-card">
+    <Card as="section" className="overflow-hidden">
       <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
         <div>
           <h2 className="font-semibold">{title}</h2>
@@ -293,7 +291,7 @@ function MarketSection({
           Quote data does not exist.
         </p>
       )}
-    </section>
+    </Card>
   );
 }
 

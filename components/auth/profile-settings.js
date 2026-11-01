@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { authClient } from "../../lib/auth-client";
 import LocalizedDate from "../layout/localized-date";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
 
 export default function ProfileSettings({ user, accounts }) {
   const [name, setName] = useState(user.name ?? "");
@@ -109,7 +111,7 @@ export default function ProfileSettings({ user, accounts }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-      <section className="rounded-xl border bg-card p-6 sm:p-8">
+      <Card as="section" className="p-6 sm:p-8">
         <div className="flex items-center gap-4">
           <div
             aria-hidden="true"
@@ -159,19 +161,20 @@ export default function ProfileSettings({ user, accounts }) {
               {signOutError}
             </p>
           )}
-          <button
+          <Button
             type="button"
             onClick={signOut}
             disabled={isSigningOut}
-            className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:pointer-events-none disabled:opacity-60"
+            variant="link"
+            className="text-muted-foreground hover:text-foreground"
           >
             {isSigningOut ? "Signing out…" : "Sign out"}
-          </button>
+          </Button>
         </div>
-      </section>
+      </Card>
 
       <div className="grid gap-6">
-        <section className="rounded-xl border bg-card p-6 sm:p-8">
+        <Card as="section" className="p-6 sm:p-8">
           <div className="mb-5">
             <h2 className="font-semibold">Personal information</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -210,18 +213,14 @@ export default function ProfileSettings({ user, accounts }) {
                 {profileNotice}
               </p>
             )}
-            <button
-              type="submit"
-              disabled={isSavingProfile}
-              className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-60"
-            >
+            <Button type="submit" disabled={isSavingProfile}>
               {isSavingProfile ? "Saving…" : "Save changes"}
-            </button>
+            </Button>
           </form>
-        </section>
+        </Card>
 
         {hasPassword && (
-          <section className="rounded-xl border bg-card p-6 sm:p-8">
+          <Card as="section" className="p-6 sm:p-8">
             <div className="mb-5">
               <h2 className="font-semibold">Change password</h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -262,15 +261,15 @@ export default function ProfileSettings({ user, accounts }) {
                   {passwordNotice}
                 </p>
               )}
-              <button
+              <Button
                 type="submit"
                 disabled={isSavingPassword}
-                className="h-10 rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs hover:bg-muted disabled:pointer-events-none disabled:opacity-60"
+                variant="outline"
               >
                 {isSavingPassword ? "Updating…" : "Update password"}
-              </button>
+              </Button>
             </form>
-          </section>
+          </Card>
         )}
       </div>
     </div>
