@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { Ellipsis } from "lucide-react";
 import { USER_ROLES } from "../../lib/user-roles.js";
@@ -117,10 +118,15 @@ export default function AdminUsersTable({ users, currentUserId }) {
                     scope="row"
                     className="whitespace-nowrap px-5 py-3.5 font-medium"
                   >
-                    {user.name || "—"}
+                    <Link
+                      href={`/admin/users/${encodeURIComponent(user.id)}`}
+                      className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    >
+                      {user.name || user.email}
+                    </Link>
                   </th>
                   <td className="whitespace-nowrap px-5 py-3.5">
-                    {user.email}
+                    {user.name ? user.email : "—"}
                   </td>
                   <td className="px-5 py-3.5">{user.role}</td>
                   <td className="px-5 py-3.5">

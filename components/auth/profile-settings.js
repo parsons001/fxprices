@@ -165,7 +165,7 @@ export default function ProfileSettings({ user, accounts }) {
             type="button"
             onClick={signOut}
             disabled={isSigningOut}
-            variant="link"
+            variant="outline"
             className="text-muted-foreground hover:text-foreground"
           >
             {isSigningOut ? "Signing out…" : "Sign out"}

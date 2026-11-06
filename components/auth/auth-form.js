@@ -16,7 +16,7 @@ const TITLES = {
 
 export default function AuthForm({
   mode,
-  callbackURL = "/convert",
+  callbackURL = "/",
   token = "",
 }) {
   const [name, setName] = useState("");
@@ -50,7 +50,9 @@ export default function AuthForm({
           callbackURL,
         });
         if (result.error) throw new Error(result.error.message);
-        window.location.assign(callbackURL);
+        setNotice(
+          "Account created. Check your email for a verification link before signing in.",
+        );
         return;
       }
       if (mode === "forgot-password") {
