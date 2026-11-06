@@ -15,7 +15,7 @@ For production, run `npm run build` followed by `npm start`. Configure the same 
 
 ## Authentication
 
-The website requires a verified account to access Convert, Send and Profile. Users can register with email/password or Google. Email verification and password-reset links are sent through the configured SMTP server. Authentication data is stored in MongoDB using Better Auth.
+Users can register with email/password or Google and sign in immediately; email verification is not required. Password-reset and email-change confirmation links are sent through the configured SMTP server. Authentication data is stored in MongoDB using Better Auth.
 
 Configure these server-only variables in `.env.local` and in the deployment environment:
 

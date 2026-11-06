@@ -5,3 +5,4 @@ data/
 out/
 .env*.local
 .vercel
+.pem

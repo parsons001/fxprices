@@ -50,9 +50,7 @@ export default function AuthForm({
           callbackURL,
         });
         if (result.error) throw new Error(result.error.message);
-        setNotice(
-          "Check your email for a verification link to finish creating your account.",
-        );
+        window.location.assign(callbackURL);
         return;
       }
       if (mode === "forgot-password") {
@@ -160,11 +158,6 @@ export default function AuthForm({
                   : "Enter a new password for your account."}
           </p>
         </div>
-        {mode === "sign-up" && (
-          <p className="-mt-2 mb-5 text-center text-xs text-muted-foreground">
-            Email verification is required before signing in.
-          </p>
-        )}
         {mode === "reset-password" && !token && (
           <p className="mb-5 text-center text-sm text-muted-foreground">
             This password reset link is invalid or expired. Request a new one.
@@ -320,9 +313,7 @@ export default function AuthForm({
       </Card>
       {isLoginPage && (
         <p className="mt-6 max-w-sm text-center text-xs leading-5 text-muted-foreground">
-          {mode === "sign-up"
-            ? "Verify your email address to start using FX Compare."
-            : "Your quote comparisons are ready when you are."}
+          Your quote comparisons are ready when you are.
         </p>
       )}
     </main>
