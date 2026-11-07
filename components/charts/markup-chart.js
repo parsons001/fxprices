@@ -150,8 +150,10 @@ export default function MarkupChart({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => formatPct(value)}
-              width={58}
+              tickFormatter={(value) =>
+                `${value > 0 ? "+" : ""}${Number(value).toFixed(2)}%`
+              }
+              width={68}
             />
             <ChartTooltip
               cursor={{ stroke: "hsl(var(--border))", strokeDasharray: "3 3" }}

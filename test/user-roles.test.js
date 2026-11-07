@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { roleForUser, USER_ROLES } from "../lib/user-roles.js";
+import {
+  formatRoleLabel,
+  roleForUser,
+  roleLabelForUser,
+  USER_ROLES,
+} from "../lib/user-roles.js";
 
 test("roles default to standard and accept subscribed or admin assignments", () => {
   assert.equal(roleForUser({ email: "standard@example.com" }), "standard");
@@ -17,4 +22,10 @@ test("roles default to standard and accept subscribed or admin assignments", () 
     roleForUser({ email: "unknown@example.com", role: "owner" }),
     "standard",
   );
+});
+
+test("role labels capitalize their first letter without changing stored roles", () => {
+  assert.equal(formatRoleLabel(USER_ROLES.STANDARD), "Standard");
+  assert.equal(formatRoleLabel(USER_ROLES.SUBSCRIBED), "Subscribed");
+  assert.equal(roleLabelForUser({ role: USER_ROLES.ADMIN }), "Admin");
 });

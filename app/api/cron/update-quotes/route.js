@@ -10,6 +10,18 @@ export const maxDuration = 60;
 export const runtime = "nodejs";
 const UPDATE_COUNTRIES = ["GB", "IE"];
 
+function loggedJsonResponse(body, status) {
+  const serialized = typeof body === "string" ? body : JSON.stringify(body);
+  console.info(serialized);
+  return new Response(serialized, {
+    status,
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json",
+    },
+  });
+}
+
 function isAuthorized(request) {
   const secret = process.env.CRON_SECRET;
   const authorization = request.headers.get("authorization");
@@ -35,18 +47,19 @@ export async function GET(request) {
     settings = await getCurrencySettings();
   } catch (error) {
     console.error("Quote update configuration could not be loaded", error);
-    return Response.json(
+    return loggedJsonResponse(
       { success: false, error: "Quote update configuration is unavailable." },
-      { status: 503, headers: { "Cache-Control": "no-store" } },
+      503,
     );
   }
   let results;
   try {
     results = await runQuoteUpdates(countries, settings);
-  } catch {
-    return Response.json(
+  } catch (error) {
+    console.error("Quote update failed unexpectedly", error);
+    return loggedJsonResponse(
       { success: false, error: "Quote update failed unexpectedly." },
-      { status: 500, headers: { "Cache-Control": "no-store" } },
+      500,
     );
   }
   results = results.map(({ context, result, error }) =>
@@ -58,11 +71,8 @@ export async function GET(request) {
       quotes[provider] += result.quotes[provider];
   }
   const failures = results.flatMap((result) => result.failures);
-  return new Response(serializeUpdateResponse(quotes, failures), {
-    status: failures.length ? 207 : 200,
-    headers: {
-      "Cache-Control": "no-store",
-      "Content-Type": "application/json",
-    },
-  });
+  return loggedJsonResponse(
+    serializeUpdateResponse(quotes, failures),
+    failures.length ? 207 : 200,
+  );
 }

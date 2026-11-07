@@ -81,6 +81,38 @@ test("Same-currency Revolut bank transfer excludes FX fees but keeps transfer fe
   assert.equal(quote.transferFeeGbp, 0.5);
   assert.equal(quote.exchangeFeeGbp, 0);
 });
+
+test("Same-currency JPY Revolut bank transfer uses zero-decimal fee units", () => {
+  const quote = revolutSendQuotes(
+    {
+      rate: { from: "JPY", to: "JPY", rate: 1 },
+      routes: [
+        {
+          id: "BANK",
+          plans: [
+            {
+              id: "STANDARD",
+              name: "Standard",
+              fees: {
+                currency: "JPY",
+                total: 150,
+                transfer: 50,
+                fx: 100,
+              },
+            },
+          ],
+        },
+      ],
+    },
+    "JPY",
+    10000,
+    "JPY",
+  )[0];
+  assert.equal(quote.feeGbp, 50);
+  assert.equal(quote.receivedAmount, 9950);
+  assert.equal(quote.transferFeeGbp, 50);
+  assert.equal(quote.exchangeFeeGbp, 0);
+});
 test("Send uses separate storage, country routing, amount units and provider errors", async (t) => {
   const saved = [];
   t.mock.method(sendStore, "save", async (result) => {
@@ -160,4 +192,51 @@ test("Send ingestion defaults to an amount from Global Config", async (t) => {
   const result = await response.json();
   assert.equal(result.amount, 250);
   assert.equal(result.quotes[0].provider, "Wise");
+});
+
+test("Send requests same-currency JPY amounts in whole-yen units", async (t) => {
+  t.mock.method(sendStore, "save", async () => "send-id");
+  t.mock.method(globalThis, "fetch", async (url) => {
+    const parsed = new URL(url);
+    if (parsed.hostname === "wise.com") return Response.json([]);
+
+    assert.equal(parsed.searchParams.get("amount"), "10000");
+    return Response.json({
+      rate: { from: "JPY", to: "JPY", rate: 1 },
+      routes: [
+        {
+          id: "BANK",
+          plans: [
+            {
+              id: "STANDARD",
+              name: "Standard",
+              fees: {
+                currency: "JPY",
+                total: 150,
+                transfer: 50,
+                fx: 100,
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
+  const settings = {
+    amounts: [10000],
+    currencyPairs: {
+      GB: [{ sourceCurrency: "JPY", currency: "JPY" }],
+      IE: [{ sourceCurrency: "JPY", currency: "JPY" }],
+    },
+  };
+  const response = await fetchAndStoreSend(
+    new Request(
+      "http://localhost/api/send?currency=JPY&sourceCurrency=JPY&gbpAmount=10000",
+    ),
+    async () => settings,
+  );
+  const result = await response.json();
+
+  assert.equal(result.quotes[0].feeGbp, 50);
+  assert.equal(result.quotes[0].receivedAmount, 9950);
 });

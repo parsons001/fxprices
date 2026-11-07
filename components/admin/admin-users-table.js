@@ -4,11 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { Ellipsis } from "lucide-react";
-import { USER_ROLES } from "../../lib/user-roles.js";
+import { Ellipsis, LoaderCircle } from "lucide-react";
+import { formatRoleLabel, USER_ROLES } from "../../lib/user-roles.js";
 import LocalizedDate from "../layout/localized-date";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 const ROLE_OPTIONS = [
   { value: USER_ROLES.STANDARD, label: "Standard" },
@@ -19,6 +26,7 @@ const ROLE_OPTIONS = [
 export default function AdminUsersTable({ users, currentUserId }) {
   const router = useRouter();
   const [pendingId, setPendingId] = useState("");
+  const [pendingAction, setPendingAction] = useState("");
   const [error, setError] = useState("");
   const [openMenu, setOpenMenu] = useState(null);
 
@@ -43,6 +51,7 @@ export default function AdminUsersTable({ users, currentUserId }) {
   async function performAction(user, action, role) {
     setError("");
     setPendingId(user.id);
+    setPendingAction(action);
     try {
       const response = await fetch(
         `/api/admin/users/${encodeURIComponent(user.id)}`,
@@ -60,6 +69,7 @@ export default function AdminUsersTable({ users, currentUserId }) {
       setError(actionError.message || "The admin action failed.");
     } finally {
       setPendingId("");
+      setPendingAction("");
     }
   }
 
@@ -112,6 +122,7 @@ export default function AdminUsersTable({ users, currentUserId }) {
             {users.map((user) => {
               const isSelf = user.id === currentUserId;
               const isPending = pendingId === user.id;
+              const isUpdatingRole = isPending && pendingAction === "role";
               return (
                 <tr key={user.id} className="border-b last:border-0">
                   <th
@@ -128,7 +139,7 @@ export default function AdminUsersTable({ users, currentUserId }) {
                   <td className="whitespace-nowrap px-5 py-3.5">
                     {user.name ? user.email : "—"}
                   </td>
-                  <td className="px-5 py-3.5">{user.role}</td>
+                  <td className="px-5 py-3.5">{formatRoleLabel(user.role)}</td>
                   <td className="px-5 py-3.5">
                     {user.emailVerified ? "Verified" : "Unverified"}
                   </td>
@@ -153,8 +164,8 @@ export default function AdminUsersTable({ users, currentUserId }) {
                       onClick={(event) => {
                         const rect =
                           event.currentTarget.getBoundingClientRect();
-                        const menuWidth = 224;
-                        const menuHeight = 170;
+                        const menuWidth = 240;
+                        const menuHeight = 240;
                         const left = Math.max(
                           8,
                           Math.min(
@@ -185,72 +196,104 @@ export default function AdminUsersTable({ users, currentUserId }) {
                             onClick={() => setOpenMenu(null)}
                           />
                           <div
-                            role="menu"
-                            aria-label={`Actions for ${user.email}`}
+                            role="dialog"
+                            aria-label={`Manage ${user.email}`}
                             style={{
                               position: "fixed",
                               top: openMenu.top,
                               left: openMenu.left,
                             }}
-                            className="z-50 w-56 rounded-md border bg-card p-1.5 text-card-foreground shadow-lg"
+                            className="z-50 w-60 rounded-lg border bg-card p-2 text-card-foreground shadow-xl"
                           >
-                            <label className="grid gap-1 px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                              Subscriber type
-                              <select
-                                aria-label={`Subscriber type for ${user.email}`}
+                            <div className="border-b px-2 pb-2">
+                              <p className="text-sm font-semibold">
+                                Manage account
+                              </p>
+                              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                {user.email}
+                              </p>
+                            </div>
+                            <label className="grid gap-1.5 px-2 py-3 text-xs font-medium text-muted-foreground">
+                              <span className="flex items-center justify-between gap-2">
+                                <span>Subscriber type</span>
+                                {isUpdatingRole && (
+                                  <span
+                                    role="status"
+                                    className="inline-flex items-center gap-1.5 font-normal"
+                                  >
+                                    <LoaderCircle
+                                      className="size-3 animate-spin"
+                                      aria-hidden="true"
+                                    />
+                                    Updating…
+                                  </span>
+                                )}
+                              </span>
+                              <Select
                                 value={user.role}
                                 disabled={isSelf || isPending}
-                                onChange={(event) => {
+                                onValueChange={(role) => {
+                                  performAction(user, "role", role);
+                                }}
+                              >
+                                <SelectTrigger
+                                  aria-label={`Subscriber type for ${user.email}`}
+                                  className="h-9 bg-background px-2.5 text-foreground shadow-sm hover:border-foreground/30"
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {ROLE_OPTIONS.map((role) => (
+                                    <SelectItem
+                                      key={role.value}
+                                      value={role.value}
+                                    >
+                                      {role.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {isSelf && (
+                                <span className="font-normal">
+                                  You can’t change your own role.
+                                </span>
+                              )}
+                            </label>
+                            <div className="border-t pt-1">
+                              <Button
+                                type="button"
+                                disabled={isSelf || isPending}
+                                variant="ghost"
+                                size="menu"
+                                className="rounded-md"
+                                onClick={() => {
                                   setOpenMenu(null);
                                   performAction(
                                     user,
-                                    "role",
-                                    event.currentTarget.value,
+                                    user.banned ? "unsuspend" : "suspend",
                                   );
                                 }}
-                                className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground disabled:opacity-60"
                               >
-                                {ROLE_OPTIONS.map((role) => (
-                                  <option key={role.value} value={role.value}>
-                                    {role.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <div className="my-1 border-t" />
-                            <Button
-                              type="button"
-                              role="menuitem"
-                              disabled={isSelf || isPending}
-                              variant="ghost"
-                              size="menu"
-                              onClick={() => {
-                                setOpenMenu(null);
-                                performAction(
-                                  user,
-                                  user.banned ? "unsuspend" : "suspend",
-                                );
-                              }}
-                            >
-                              {isPending
-                                ? "Saving…"
-                                : user.banned
-                                  ? "Unsuspend account"
-                                  : "Suspend account"}
-                            </Button>
-                            <Button
-                              type="button"
-                              role="menuitem"
-                              disabled={isSelf || isPending}
-                              variant="destructive"
-                              size="menu"
-                              onClick={() => {
-                                setOpenMenu(null);
-                                deleteUser(user);
-                              }}
-                            >
-                              Delete account
-                            </Button>
+                                {isPending
+                                  ? "Saving…"
+                                  : user.banned
+                                    ? "Unsuspend account"
+                                    : "Suspend account"}
+                              </Button>
+                              <Button
+                                type="button"
+                                disabled={isSelf || isPending}
+                                variant="destructive"
+                                size="menu"
+                                className="rounded-md"
+                                onClick={() => {
+                                  setOpenMenu(null);
+                                  deleteUser(user);
+                                }}
+                              >
+                                Delete account
+                              </Button>
+                            </div>
                           </div>
                         </>,
                         document.body,

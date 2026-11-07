@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { ObjectId } from "mongodb";
 import { requireAdminUser } from "../../../../lib/auth-session.js";
 import { getDatabase } from "../../../../lib/db/mongodb.js";
-import { roleForUser } from "../../../../lib/user-roles.js";
+import { describeSessionDevice } from "../../../../lib/session-device.js";
+import { roleLabelForUser } from "../../../../lib/user-roles.js";
 import LocalizedDate from "../../../../components/layout/localized-date.js";
 import PageHeading from "../../../../components/layout/page-heading.js";
 import { Button } from "../../../../components/ui/button.js";
@@ -91,7 +92,7 @@ export default async function AdminUserDetailsPage({ params }) {
             </div>
             <div>
               <dt className="text-muted-foreground">Role</dt>
-              <dd className="mt-1 font-medium">{roleForUser(user)}</dd>
+              <dd className="mt-1 font-medium">{roleLabelForUser(user)}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Email status</dt>
@@ -201,9 +202,7 @@ export default async function AdminUserDetailsPage({ params }) {
                   {sessions.map((session) => (
                     <tr key={session._id} className="border-b last:border-0">
                       <td className="max-w-sm px-5 py-3.5">
-                        <span className="line-clamp-2">
-                          {session.userAgent || "Unknown device"}
-                        </span>
+                        {describeSessionDevice(session.userAgent)}
                       </td>
                       <td className="whitespace-nowrap px-5 py-3.5">
                         <LocalizedDate
