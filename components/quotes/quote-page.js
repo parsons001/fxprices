@@ -33,31 +33,28 @@ export default async function QuotePage({
   let snapshots = [];
   let conversionFeesUnavailable = false;
   const store = mode === "send" ? sendStore : conversionStore;
-  try {
-    snapshots = await store.history({
-      senderCountry,
-      sourceCurrency,
-      days: selectedDays,
-      currency: selectedCurrency || null,
-      amount: selectedAmount || null,
-    });
-  } catch {
-    snapshots = [];
-  }
+  const historyOptions = {
+    senderCountry,
+    sourceCurrency,
+    days: selectedDays,
+    currency: selectedCurrency || null,
+    amount: selectedAmount || null,
+  };
+  const snapshotsPromise = store.history(historyOptions).catch(() => []);
+  const conversionsPromise =
+    mode === "send"
+      ? conversionStore.history(historyOptions).catch(() => {
+          conversionFeesUnavailable = true;
+          return [];
+        })
+      : Promise.resolve([]);
+  const [historySnapshots, conversions] = await Promise.all([
+    snapshotsPromise,
+    conversionsPromise,
+  ]);
+  snapshots = historySnapshots;
 
   if (mode === "send") {
-    let conversions = [];
-    try {
-      conversions = await conversionStore.history({
-        senderCountry,
-        sourceCurrency,
-        days: selectedDays,
-        currency: selectedCurrency || null,
-        amount: selectedAmount || null,
-      });
-    } catch {
-      conversionFeesUnavailable = true;
-    }
     snapshots = attachConversionFees(snapshots, conversions);
   }
 

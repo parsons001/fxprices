@@ -32,7 +32,7 @@ const getLatestMarketSnapshots = unstable_cache(
       sendStore.latest({ senderCountry, sourceCurrency }),
     ]),
   ["dashboard-market-overview-latest-v1"],
-  { revalidate: 60 },
+  { revalidate: 600 },
 );
 
 const getPreviousHourSnapshots = unstable_cache(
@@ -48,7 +48,7 @@ const getPreviousHourSnapshots = unstable_cache(
     ]);
   },
   ["dashboard-market-overview-previous-hour-v1"],
-  { revalidate: 60 },
+  { revalidate: 600 },
 );
 
 export default async function DashboardPage({ searchParams = {} }) {
