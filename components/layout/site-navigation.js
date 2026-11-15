@@ -10,8 +10,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Button } from "../ui/button";
-import SidebarNotification from "../ui/sidebar-notification";
 import { Card } from "../ui/card";
 import { authClient } from "../../lib/auth-client";
 import { USER_ROLES } from "../../lib/user-roles";
@@ -102,24 +100,7 @@ export default function SiteNavigation() {
           })}
         </div>
       </nav>
-      <div className="mt-auto hidden space-y-3 px-3 pb-3 lg:block">
-        <SidebarNotification
-          title="Add to ChatGPT"
-          description="Connect ChatGPT to read saved FX quotes and daily rates."
-        >
-          <div className="mt-2">
-            <Button
-              as="a"
-              href="https://chatgpt.com/plugins"
-              target="_blank"
-              rel="noreferrer"
-              size="sm"
-              className="w-full"
-            >
-              Add to ChatGPT
-            </Button>
-          </div>
-        </SidebarNotification>
+      <div className="mt-auto hidden px-3 pb-3 lg:block">
         {session?.user && (
           <div className="border-sidebar-border border-t pt-3">
             <Card className="p-2">

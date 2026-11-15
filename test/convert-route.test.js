@@ -189,5 +189,16 @@ test("Route preserves fixed-budget calculations and partial provider failures", 
   assert.equal(unsaved.quotes.length, 5);
   assert.ok(!JSON.stringify(unsaved).includes("private connection details"));
   assert.equal(partial.errors[0].provider, "Wise");
+  assert.deepEqual(
+    partial.providerResults.map(({ provider, status, durationMs }) => ({
+      provider,
+      status,
+      timed: Number.isFinite(durationMs) && durationMs >= 0,
+    })),
+    [
+      { provider: "Wise", status: "failed", timed: true },
+      { provider: "Revolut", status: "success", timed: true },
+    ],
+  );
   assert.equal(markupFor(standard, undefined), null);
 });

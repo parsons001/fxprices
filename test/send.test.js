@@ -139,6 +139,17 @@ test("Send uses separate storage, country routing, amount units and provider err
   assert.equal(result.quotes.length, 2);
   assert.equal(result.storage.saved, true);
   assert.equal(saved[0].recipientCountry, "ES");
+  assert.deepEqual(
+    result.providerResults.map(({ provider, status, durationMs }) => ({
+      provider,
+      status,
+      timed: Number.isFinite(durationMs) && durationMs >= 0,
+    })),
+    [
+      { provider: "Wise", status: "success", timed: true },
+      { provider: "Revolut", status: "success", timed: true },
+    ],
+  );
   t.mock.method(globalThis, "fetch", async () =>
     Response.json({}, { status: 503 }),
   );
@@ -146,6 +157,14 @@ test("Send uses separate storage, country routing, amount units and provider err
     await fetchAndStoreSend(request(), getTestCurrencySettings)
   ).json();
   assert.equal(failed.errors.length, 2);
+  assert.ok(
+    failed.providerResults.every((provider) => provider.status === "failed"),
+  );
+  assert.ok(
+    failed.providerResults.every((provider) =>
+      Number.isFinite(provider.durationMs),
+    ),
+  );
   assert.equal(failed.storage.saved, true);
 });
 
