@@ -34,11 +34,11 @@ export default async function AdminPage() {
     <>
       <PageHeading
         breadcrumb="Admin"
-        title="Users"
-        description={`Signed in as ${session.user.email}. Showing up to 100 accounts.`}
-        beforeTitle={<AdminSectionNavigation current="users" />}
+        title="Admin"
+        description="Manage users and review provider update performance."
       />
       <main className="mx-auto max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
+        <AdminSectionNavigation current="users" />
         <AdminUsersTable
           currentUserId={session.user.id}
           users={users.map((user) => ({

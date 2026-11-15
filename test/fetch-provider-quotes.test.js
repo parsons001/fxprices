@@ -10,6 +10,7 @@ test("provider timings cover successful quote fetching", async () => {
 
   assert.equal(result.provider, "Wise");
   assert.equal(result.status, "success");
+  assert.ok(result.completedAtMs >= result.startedAtMs);
   assert.ok(result.durationMs >= 1);
   assert.deepEqual(result.quotes, [{ rate: 1.2 }]);
 });
@@ -21,6 +22,7 @@ test("provider failures return timed error details without rejecting", async () 
 
   assert.equal(result.provider, "Revolut");
   assert.equal(result.status, "failed");
+  assert.ok(result.completedAtMs >= result.startedAtMs);
   assert.ok(result.durationMs >= 0);
   assert.equal(result.error, "Quote unavailable (HTTP 503)");
   assert.deepEqual(result.quotes, []);

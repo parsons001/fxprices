@@ -16,9 +16,11 @@ export default function PageHeading({
       <div className="mx-auto max-w-[1440px] px-4 pb-6 pt-7 sm:px-6 lg:px-8">
         {beforeTitle}
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-          {description}
-        </p>
+        {description && (
+          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+            {description}
+          </p>
+        )}
       </div>
     </>
   );

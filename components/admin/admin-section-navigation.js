@@ -2,7 +2,11 @@ import Link from "next/link";
 
 const sections = [
   { id: "users", label: "Users", href: "/admin" },
-  { id: "cron-runs", label: "Cron analytics", href: "/admin/cron-runs" },
+  {
+    id: "cron-runs",
+    label: "Provider Update Analytics",
+    href: "/admin/cron-runs",
+  },
 ];
 
 export default function AdminSectionNavigation({ current }) {

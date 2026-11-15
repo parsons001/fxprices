@@ -1,6 +1,6 @@
 "use client";
 
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Legend, Line, LineChart, XAxis, YAxis } from "recharts";
 import { useBrowserDateFormatter } from "../quotes/use-browser-date-formatter.js";
 import { Card } from "../ui/card.js";
 import {
@@ -37,8 +37,9 @@ export default function ProviderRunDurationChart({ data }) {
     <Card className="p-5 sm:p-6">
       <h3 className="font-semibold">Provider time per run</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Average quote-request time per provider for each cron run. This excludes
-        MongoDB write time.
+        Provider time runs from its first job starting to its last job
+        finishing, including gaps between jobs. Concurrent jobs are counted
+        once. Older runs without elapsed timing are shown as gaps.
       </p>
       <ChartContainer
         config={chartConfig}
@@ -61,6 +62,7 @@ export default function ProviderRunDurationChart({ data }) {
             width={50}
             tickFormatter={(value) => `${(Number(value) / 1000).toFixed(1)}s`}
           />
+          <Legend />
           <ChartTooltip
             content={
               <ChartTooltipContent
@@ -78,7 +80,7 @@ export default function ProviderRunDurationChart({ data }) {
             <Line
               key={provider}
               dataKey={provider}
-              name={provider}
+              name={config.label}
               type="monotone"
               stroke={config.color}
               strokeWidth={2}

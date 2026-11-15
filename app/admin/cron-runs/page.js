@@ -4,7 +4,7 @@ import CronRunsAnalytics from "../../../components/admin/cron-runs-analytics.js"
 import AdminSectionNavigation from "../../../components/admin/admin-section-navigation.js";
 import PageHeading from "../../../components/layout/page-heading.js";
 
-export const metadata = { title: "Cron run analytics" };
+export const metadata = { title: "Provider Update Analytics" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminCronRunsPage() {
@@ -15,11 +15,11 @@ export default async function AdminCronRunsPage() {
     <>
       <PageHeading
         breadcrumb="Admin"
-        title="Cron run analytics"
-        description="Review quote refresh performance, reliability, and failures."
-        beforeTitle={<AdminSectionNavigation current="cron-runs" />}
+        title="Admin"
+        description="Manage users and review provider update performance."
       />
       <main className="mx-auto max-w-[1440px] px-4 pb-10 sm:px-6 lg:px-8">
+        <AdminSectionNavigation current="cron-runs" />
         <CronRunsAnalytics runs={runs} />
       </main>
     </>

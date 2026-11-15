@@ -112,3 +112,15 @@ Quote `sourceAmount`, `feeGbp` and related amount fields use the snapshot's `sou
 - `lib/charts/`: history aggregation and CSV exports.
 - `lib/utils/`: formatting and CSS class helpers.
 - `test/`: automated tests.
+
+### Quote exclusions
+
+Optional Global Config key `FX_QUOTE_EXCLUSIONS` excludes exact provider requests before fetching. Each entry must specify all four fields:
+
+```json
+[
+  { "provider": "Revolut", "amount": 100, "sourceCurrency": "JPY", "currency": "JPY" }
+]
+```
+
+When the key is absent, exclusions default to `[]` (all requests enabled). There are no built-in exclusions. The rule above is an example; only explicitly configured rules are applied. Providers are `Wise` and `Revolut`. Rules apply to all sender countries and both send and conversion requests. Other amounts, pairs, and providers continue running. Excluded requests produce no provider errors or timing entries. Cron jobs excluded for both providers are not scheduled.
